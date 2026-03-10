@@ -1,0 +1,8 @@
+{
+    "name": "reMarkdown",
+    "loadsBackend": true,
+    "entry": "/ui/ui.qml",
+    "id": "reMarkdown",
+    "supportsScaling": true,
+    "canHaveMultipleFrontends": true
+}
