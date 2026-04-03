@@ -1,0 +1,47 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [arm64, armv7h]
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+      
+      - name: Install Qt dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qt6-tools-dev qttools5-dev
+      
+      - name: Build project for ${{ matrix.arch }}
+        run: |
+          chmod +x build.sh
+          ./build.sh ${{ matrix.arch }}
+      
+      - name: Create release archive
+        run: |
+          ARCH=${{ matrix.arch }}
+          ZIP_NAME="reMarkdown-${ARCH}-${{ github.ref_name }}.zip"
+          cd rmd
+          zip -r "../${ZIP_NAME}" backend manifest.json resources.rcc
+          cd ..
+          echo "ZIP_FILE=${ZIP_NAME}" >> $GITHUB_ENV
+      
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ${{ env.ZIP_FILE }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
