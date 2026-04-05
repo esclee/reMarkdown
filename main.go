@@ -15,7 +15,6 @@ import (
 type MessageType uint32
 
 const (
-	FolderRequest   MessageType = 1
 	MarkDownRequest MessageType = 100
 )
 
@@ -40,21 +39,10 @@ func (state *reMarkdownState) HandleMessage(replier *appload.BackendReplier, mes
 	if message.MsgType == appload.MsgSystemTerminate {
 		fmt.Println("Received message to terminate!")
 		os.Exit(0)
+		return
 	}
 	if message.MsgType > 1000 {
 		replier.SendMessage(200, "Init")
-	}
-	if message.MsgType == uint32(FolderRequest) {
-		fmt.Println("Received message to check for folder")
-		if _, err := os.Stat(message.Contents); errors.Is(err, os.ErrNotExist) {
-			err := os.Mkdir(message.Contents, os.ModePerm)
-			if err != nil {
-				log.Fatalf("error while creating folder")
-			}
-			replier.SendMessage(3, message.Contents)
-		} else {
-			replier.SendMessage(2, message.Contents)
-		}
 	}
 	if message.MsgType == uint32(MarkDownRequest) {
 		fmt.Println("Received a request for html rendering")
@@ -65,6 +53,12 @@ func (state *reMarkdownState) HandleMessage(replier *appload.BackendReplier, mes
 
 func main() {
 	class := new(reMarkdownState)
+	if _, err := os.Stat("/home/root/reMarkdown"); errors.Is(err, os.ErrNotExist) {
+		err := os.Mkdir("/home/root/reMarkdown", os.ModePerm)
+		if err != nil {
+			log.Fatalf("error while creating folder")
+		}
+	}
 	app, err := appload.NewAppLoad(class)
 	if err != nil {
 		log.Fatalf("error creating app: %v", err)

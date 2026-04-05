@@ -4,6 +4,8 @@ reMarkdown is a lightweight Markdown editor for the [reMarkable tablet](https://
 
 reMarkdown has been tested on the reMarkable Paper Pro using the Type Folio. In fact, editing this very README file is how reMarkdown was tested.
 
+**Note**: This version of reMarkdown relies on a new feature of AppLoad that is not available in AppLoad release versions <= 0.5.0. You can either build AppLoad from source or wait until a new release is available.
+
 ## How to use reMarkdown
 
 When you open reMarkdown, you will see a file selector, which will list all .md files available in the folder `/home/root/reMarkdown`. If the folder does not exist, it will be created. You can either open an existing file via the selector (as you type, the list will filter down to files that have names starting with what you have typed) or creating a new file by typing in a new filename.
@@ -15,6 +17,8 @@ If you want to see what the .md file would look like with formatting, hit the me
 In the render view, if you click on a link, reMarkdown will open the link if it deems the link to be reMarkdown-compatible, i.e., if the link target is either `<some-file-name>.md` or `/home/root/<some-file-name>.md`. If the file does not exist, then this will create a new file.
 
 From the editing view, hitting the escape key will save the file and open the selector view. There, you can return to the document or open a different document to edit. Hitting the escape key while in the selector view will exit reMarkdown.
+
+**Note**: Tapping the right edge of the screen will toggle between the editing view and the render view (i.e., same behavior as hitting the opt/alt key). Tapping the left edge of the screen while in the render view will toggle back to the editing view; while in the editing view will save the file and open the selector view; while in the selector view will exit reMarkdown. In other words, tapping on the left edge has the same behavior as hitting the escape key.
 
 ## Why not stick with the stock reMarkable notebooks?
 
@@ -32,6 +36,5 @@ This is a personal side project/proof-of-concept, not a polished product. Natura
 - Square brackets: xochitl has some quirks when it comes to keyboard inputs, which makes it hard to type some characters using a keyboard. Unfortunately for Markdown enthusiasts, square brackets fall in this category if using the en-US layout. To get around that, typing `((` without letting go of the shift key will type `[`, and  typing `))` without letting go of the shift key will type `]`.
 	- More information about xochitl's keymapping can be found in their [epaper-qpa](https://github.com/remarkable/epaper-qpa) repo.
 	- If you built a custom qpa for yourself that doesn't reassign square brackets to something else you wouldn't need this workaround, but I implemented this workaround with an eye towards making the tablet a usable markdown editor with the Type Folio and not too much messing around.
-- Latency. reMarkable's default refresh mode isn't the fastest, and that shows. I think I'm constantly 5-6 letters ahead of what the screen shows. I hypothesize that this would be faster with a different refresh mode enabled (this is what xochitl does when someone is actively typing), but I have not tested it.
-	- A few developers provide UI mods that enables changing the tablet's refresh mode if you are interested (e.g., [rm-hacks-qmd](https://github.com/asivery/rm-hacks-qmd)).
 - When the app doesn't know what to do with a keypress (e.g., because you tried to move the cursor beyond the end of the text using the arrow keys), keypress bubbles up, all the way to xochitl. Most of this should be caught but I might have missed things here and there. Tapping on the text makes reMarkdown regain focus.
+- Closing reMarkdown sometimes (rarely, in my experience, but it does happen) crashes the tablet.
