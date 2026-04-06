@@ -50,6 +50,9 @@ Rectangle {
 
     signal close
     function unloading() {
+        if (!selector) {
+            saveFile();
+        }
         console.log("We're unloading!");
         appload.terminate();
     }
@@ -97,7 +100,13 @@ Rectangle {
             curY = flick.contentY;
             root.doc = editor.text;
             editState = false;
-            appload.sendMessage(100, doc);
+            if (editor.text.length > 0) {
+                appload.sendMessage(100, doc);
+            }
+            else {
+                docHTML = "";
+                renderer.text = "";
+            }
         } else {
             console.log("Toggling to edit view");
             editState = true;
@@ -154,6 +163,7 @@ Rectangle {
         xhr.send();
     }
     function saveFile() {
+        doc = editor.text;
         console.log("Saving " + file);
         var fileUrl = "file://" + folder + file;
         var request = new XMLHttpRequest();
@@ -364,12 +374,15 @@ Rectangle {
                 displayMethod: DisplayMethodArea.Content
             }
 
+            onTextChanged: {
+                root.lastType = Date.now();
+            }
+
             Keys.onReleased: (event) => {
                 handleKeyEvent(event);
                 if (event.key == Qt.Key_Escape || event.key == Qt.Key_Meta) {
                     return;
                 }
-                root.lastType = Date.now();
                 if (editState) {
 		            doc = editor.text;
 		            let cY = flick.contentY;
@@ -486,8 +499,11 @@ Rectangle {
             Component.onCompleted: {
                 selectorTextEdit.forceActiveFocus();
             }
-            Keys.onPressed: (event) => {
+            onTextChanged: {
                 selectorText = selectorTextEdit.text;
+                folderModel.nameFilters = [selectorText + "*"];
+            }
+            Keys.onPressed: (event) => {
                 if (event.key == Qt.Key_Enter || event.key == Qt.Key_Return){
                     if (!selectorList.currentItem) {
                         newFile(selectorText);
@@ -502,13 +518,11 @@ Rectangle {
                     editState = true;
                     return;
                 }
+                handleKeyEvent(event);
             }
             Keys.onReleased: (event) => {
                 handleKeyEvent(event);
-                selectorText = selectorTextEdit.text;
-                folderModel.nameFilters = [selectorText + "*"];
             }
-
             Keys.forwardTo: selectorList
         }
         ListView {
@@ -519,24 +533,25 @@ Rectangle {
             anchors.right: parent.right
             highlightResizeDuration: 0
             highlight: Rectangle {
-                color: "white"
+                color: "transparent"
                 border.width: 5
                 border.color: "black"
                 radius: 5
                 width: parent.width
-            }
-            Component {
-                id: fileDelegate
-                Text {
-                    width: parent.width - 10
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: fileName
-                    color: "black"
-                    font.pointSize: 24
-                }
+                z: 2
             }
             model: folderModel
-            delegate: fileDelegate
+            delegate: ItemDelegate {
+                width: parent.width - 10
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: fileName
+                palette.text: "black"
+                font.pointSize: 24
+                onClicked: {
+                    loadFile(fileName);
+                }
+            }
+            
         }
     }
 }
