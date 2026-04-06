@@ -157,6 +157,7 @@ Rectangle {
         xhr.send();
     }
     function saveFile() {
+        doc = editor.text;
         console.log("Saving " + file);
         var fileUrl = "file://" + folder + file;
         var request = new XMLHttpRequest();
@@ -509,7 +510,7 @@ Rectangle {
             Keys.onReleased: (event) => {
                 handleKeyEvent(event);
                 selectorText = selectorTextEdit.text;
-                folderModel.nameFilters = [selectorText + "*"];
+                folderModel.nameFilters = [selectorText + "*.md"];
             }
 
             Keys.forwardTo: selectorList
