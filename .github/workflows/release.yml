@@ -41,7 +41,7 @@ jobs:
           VERSION=${{ steps.version.outputs.version }}
           ZIP_NAME="reMarkdown-${ARCH}-${VERSION}.zip"
           cd rmd
-          zip -r "../${ZIP_NAME}" backend manifest.json resources.rcc
+          zip -r "../${ZIP_NAME}" backend manifest.json resources.rcc icon.png
           cd ..
           echo "ZIP_FILE=${ZIP_NAME}" >> $GITHUB_ENV
       
