@@ -50,6 +50,9 @@ Rectangle {
 
     signal close
     function unloading() {
+        if (!selector) {
+            saveFile();
+        }
         console.log("We're unloading!");
         appload.terminate();
     }
