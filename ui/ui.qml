@@ -28,6 +28,7 @@ import Qt.labs.folderlistmodel
 import QtQuick.Controls
 import QtQuick.Layouts
 import net.asivery.AppLoad 1.0
+import net.asivery.ApploadUtils
 
 Rectangle {
     id: root
@@ -45,6 +46,7 @@ Rectangle {
     property string folder: "/home/root/reMarkdown/"
     property string file: ""
     property string selectorText: ""
+    property var lastType: -1
 
     signal close
     function unloading() {
@@ -59,15 +61,10 @@ Rectangle {
             console.log("Appload received message " + type);
             if (type == 200) {
                 console.log("init");
+                folderModel.folder = "file://" + root.folder;
                 return;
             }
             switch (type) {
-                case 2:
-                    console.log(folder + " already exists.");
-                    break;
-                case 3:
-                    console.log(folder + "was created.");
-                    break;
                 case 101:
                     console.log("rendered HTML returned.");
                     docHTML = contents;
@@ -172,6 +169,7 @@ Rectangle {
         if (event.key == Qt.Key_Escape) {
             if (selector) {
                 root.close();
+                return;
             }
             else if (!editState) {
                 toggleView();
@@ -181,7 +179,7 @@ Rectangle {
                 selector = true;
             }
         }
-        else if (event.key == Qt.Key_Meta) {
+        else if (event.key == Qt.Key_Meta || event.key == Qt.Key_Alt) {
             toggleView();
         }
     }
@@ -193,8 +191,54 @@ Rectangle {
     }
 
     Component.onCompleted: {
-        appload.sendMessage(1, folder);
         selector = true;
+    }
+
+    Timer {
+        interval: 1000
+        running: true
+        repeat: true
+        onTriggered: {
+            if (Date.now() - lastType < 1000) {
+                dm.displayMethod = DisplayMethodArea.Animate;
+                return;
+            }
+            dm.displayMethod = DisplayMethodArea.Content;
+        }
+    }
+    Rectangle {
+        width: parent.width * 0.025
+        height: parent.height
+        anchors.left: parent.left
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                if (selector) {
+                    root.close();
+                }
+                else if (!editState) {
+                    toggleView();
+                }
+                else {
+                    saveFile();
+                    selector = true;
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        width: parent.width * 0.025
+        height: parent.height
+        anchors.right: parent.right
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                if (!selector) {
+                    toggleView();
+                }
+            }
+        }
     }
     
     Flickable {
@@ -240,7 +284,7 @@ Rectangle {
                         flick.scrollDown();
                         event.accepted = true;
                     } else {
-                        if (editor.cursorPosition >= editor.text.length) {
+                        if (editor.cursorPosition >= editor.text.length || editor.cursorRectangle.y > editor.contentHeight - 2 * editor.cursorRectangle.height) {
                             editor.cursorPosition = editor.text.length;
                             event.accepted = true;
                         }
@@ -251,7 +295,7 @@ Rectangle {
                         flick.scrollUp();
                         event.accepted = true;
                     } else {
-                        if (editor.cursorPosition <= 0) {
+                        if (editor.cursorPosition <= 0 || editor.cursorRectangle.y < editor.cursorRectangle.height) {
                             editor.cursorPosition = 0;
                             event.accepted = true;
                         }
@@ -296,6 +340,7 @@ Rectangle {
         }
 
         TextArea {
+
             id: editor
             width: flick.width
             Keys.enabled: true
@@ -313,11 +358,18 @@ Rectangle {
             property bool leftP: false
             property bool rightP: false
 
+            DisplayMethodArea {
+                id: dm
+                anchors.fill: parent
+                displayMethod: DisplayMethodArea.Content
+            }
+
             Keys.onReleased: (event) => {
                 handleKeyEvent(event);
                 if (event.key == Qt.Key_Escape || event.key == Qt.Key_Meta) {
                     return;
                 }
+                root.lastType = Date.now();
                 if (editState) {
 		            doc = editor.text;
 		            let cY = flick.contentY;
@@ -415,17 +467,17 @@ Rectangle {
         anchors.centerIn: parent
         width: parent.width * 0.6
         height: parent.height * 0.6
-        color: "black"
+        color: "white"
         visible: selector
         radius: 20
         border.width: 5
-        border.color: "gray"
+        border.color: "black"
         TextArea {
             id: selectorTextEdit
             text: selectorText
             textFormat: TextEdit.PlainText
-            width: parent.contentWidth
-            color: "white"
+            width: parent.width - 10
+            color: "black"
             visible: selector
             font.pointSize: 24
             font.family: "Noto Mono"
@@ -435,6 +487,7 @@ Rectangle {
                 selectorTextEdit.forceActiveFocus();
             }
             Keys.onPressed: (event) => {
+                selectorText = selectorTextEdit.text;
                 if (event.key == Qt.Key_Enter || event.key == Qt.Key_Return){
                     if (!selectorList.currentItem) {
                         newFile(selectorText);
@@ -467,15 +520,18 @@ Rectangle {
             highlightResizeDuration: 0
             highlight: Rectangle {
                 color: "white"
+                border.width: 5
+                border.color: "black"
                 radius: 5
-                width: 600
+                width: parent.width
             }
             Component {
                 id: fileDelegate
                 Text {
-                    width: parent.width
+                    width: parent.width - 10
+                    anchors.horizontalCenter: parent.horizontalCenter
                     text: fileName
-                    color: ListView.isCurrentItem ? "black" : "white"
+                    color: "black"
                     font.pointSize: 24
                 }
             }
