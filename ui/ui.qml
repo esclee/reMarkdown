@@ -100,7 +100,13 @@ Rectangle {
             curY = flick.contentY;
             root.doc = editor.text;
             editState = false;
-            appload.sendMessage(100, doc);
+            if (editor.text.length > 0) {
+                appload.sendMessage(100, doc);
+            }
+            else {
+                docHTML = "";
+                renderer.text = "";
+            }
         } else {
             console.log("Toggling to edit view");
             editState = true;
