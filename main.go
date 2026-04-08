@@ -16,6 +16,7 @@ type MessageType uint32
 
 const (
 	MarkDownRequest MessageType = 100
+	FolderRequest   MessageType = 300
 )
 
 type reMarkdownState struct {
@@ -48,6 +49,24 @@ func (state *reMarkdownState) HandleMessage(replier *appload.BackendReplier, mes
 		fmt.Println("Received a request for html rendering")
 		rendered_text := mdToHTML([]byte(message.Contents))
 		replier.SendMessage(101, string(rendered_text))
+	}
+	if message.MsgType == uint32(FolderRequest) {
+		fmt.Println("Folder request received")
+		info, err := os.Stat("/home/root/reMarkdown/" + message.Contents)
+		if err == nil {
+			if info.IsDir() {
+				replier.SendMessage(301, "Is a folder")
+			} else {
+				log.Fatalf("folder request received but not a folder")
+			}
+		}
+		if errors.Is(err, os.ErrNotExist) {
+			err2 := os.MkdirAll("/home/root/reMarkdown/"+message.Contents, os.ModePerm)
+			if err2 != nil {
+				log.Fatalf("error while creating folder")
+			}
+			replier.SendMessage(302, "Created new folder")
+		}
 	}
 }
 

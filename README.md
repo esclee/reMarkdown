@@ -20,6 +20,15 @@ From the editing view, hitting the escape key will save the file and open the se
 
 **Note**: Tapping the right edge of the screen will toggle between the editing view and the render view (i.e., same behavior as hitting the opt/alt key). Tapping the left edge of the screen while in the render view will toggle back to the editing view; while in the editing view will save the file and open the selector view; while in the selector view will exit reMarkdown. In other words, tapping on the left edge has the same behavior as hitting the escape key.
 
+### Subfolders
+
+Subfolder support is a WIP.
+- By default, the selector shows all .md files in the current folder (filtered by the text box) as well as all subfolders (not filtered). You can toggle the visibility of the subfolders by tapping on the right edge of the screen.
+- Through the textbox: typing a folder's relative path from `/home/root/reMarkdown/` including the trailing `/` will open that folder. If the folder does not exist, it will be created for you.
+	- e.g. if you type `subfolder/subfolder2/` in the textbox, you will see all .md files in `/home/root/reMarkdown/subfolder/subfolder2/` as well as all subfolders within that folder (assuming subfolder visibility is on).
+	- e.g. if you type `subfolder/subfolder2` in the textbox, you will see all .md files in `/home/root/reMardown/subfolder` whose file names start with `subfolder2` as well as any subfolders (regardless of what the name is) within `/home/root/reMardown/subfolder` (assuming subfolder visibility is on).
+- Through the selector: the selector will by default show all .md files in the current directory (filtered by the textbox) as well as all subdirectories in the current directory, essentially by typing in the textbox for you.
+
 ## Why not stick with the stock reMarkable notebooks?
 
 It is true that you can type into reMarkable notebook, and it supports some amount of Markdown syntax when typing. But the problem is that it's not _saved_ in the Markdown format; rather, everything is saved in the proprietary .rm files, making it hard to easily grab the typed content. The goal of reMarkdown is to have a true Markdown editor for the reMarkable tablet--distraction-free writing but producing files that any other Markdown editor/renderer can work with.
