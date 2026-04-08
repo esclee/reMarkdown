@@ -47,6 +47,9 @@ Rectangle {
     property string file: ""
     property string selectorText: ""
     property var lastType: -1
+    property int foldercheck: -1
+    property string curFilePath: ""
+    property string currentFolder: "/home/root/reMarkdown/"
 
     signal close
     function unloading() {
@@ -75,6 +78,11 @@ Rectangle {
                     break;
                 case 201:
                     root.close();
+                    break;
+                case 301:
+                case 302:
+                    foldercheck = 1;
+                    break;
             }
         }
 
@@ -119,10 +127,10 @@ Rectangle {
         console.log("Create new file " + fileName);
         var fileUrl = ""
         if (fileName.endsWith(".md")) {
-            fileUrl = "file://" + folder + fileName;
+            fileUrl = fileName;
         }
         else {
-            fileUrl = "file://" + folder + fileName + ".md";
+            fileUrl = fileName + ".md";
         }
         var request = new XMLHttpRequest();
         request.open("PUT", fileUrl, false);
@@ -133,19 +141,16 @@ Rectangle {
     function loadFile(fileName) {
         console.log("Loading file " + fileName);
         var fileUrl = "";
-        var fileFull = ""
         if (fileName.endsWith(".md")) {
-            fileUrl = "file://" + folder + fileName;
-            fileFull = fileName;
+            fileUrl = fileName;
         }
         else {
-            fileUrl = "file://" + folder + fileName + ".md";
-            fileFull = fileName + ".md";
+            fileUrl = fileName + ".md";
         }
-        if (fileFull != file) {
+        if (fileUrl != file) {
             cursorPosition = 0;
-            editor.cursorPosition = 0;
         }
+        root.currentFolder = fileUrl.slice("file://".length, fileUrl.lastIndexOf("/") + 1);
         var xhr = new XMLHttpRequest();
         xhr.open("GET", fileUrl);
         xhr.onreadystatechange = function () {
@@ -153,7 +158,7 @@ Rectangle {
                 let res = xhr.responseText;
                 selector = false;
                 editState = true;
-                file = fileFull;
+                file = fileUrl;
                 doc = res;
                 editor.text = doc;
             }
@@ -165,7 +170,7 @@ Rectangle {
     function saveFile() {
         doc = editor.text;
         console.log("Saving " + file);
-        var fileUrl = "file://" + folder + file;
+        var fileUrl = file;
         var request = new XMLHttpRequest();
         request.open("PUT", fileUrl);
         request.onreadystatechange = function() {
@@ -198,6 +203,9 @@ Rectangle {
         id: folderModel
         folder: "file://" + root.folder
         nameFilters: ["*.md"]
+        sortReversed: true
+        sortField: FolderListModel.Type
+        showDirs: true
     }
 
     Component.onCompleted: {
@@ -246,6 +254,9 @@ Rectangle {
             onClicked: {
                 if (!selector) {
                     toggleView();
+                }
+                else {
+                    folderModel.showDirs = !folderModel.showDirs;
                 }
             }
         }
@@ -445,17 +456,30 @@ Rectangle {
             onLinkActivated: (link) => {
                 console.log("Link activated: " + link);
                 let fileName = link;
-                if (link.startsWith(root.folder)) {
-                    fileName = fileName.replace(folder, "");
-                }
                 if (fileName.endsWith(".md") && !(fileName.includes("/"))) {
                     let xhr = new XMLHttpRequest();
-                    xhr.open('GET', "file://" + root.folder + fileName, false);
+                    xhr.open('GET', "file://" + root.currentFolder + fileName, false);
+                    xhr.send();
+                    if (xhr.status === 200 || xhr.status === 0) {
+                        console.log(link + " is a .md file in " + root.currentFolder + ", loading.");
+                        saveFile();
+                        loadFile("file://" + root.currentFolder + fileName);
+                        return;
+                    }
+                }
+                else if (link.startsWith(root.folder) && fileName.endsWith(".md")) {
+                    let linkedFileFolder = link.slice(root.folder.length, link.lastIndexOf("/") + 1);
+                    console.log(linkedFileFolder);
+                    if (linkedFileFolder.length > 0) {
+                        appload.sendMessage(300, linkedFileFolder);
+                    }
+                    let xhr = new XMLHttpRequest();
+                    xhr.open('GET', "file://" + fileName, false);
                     xhr.send();
                     if (xhr.status === 200 || xhr.status === 0) {
                         console.log(link + " is a .md file in " + root.folder +", loading.");
                         saveFile();
-                        loadFile(fileName);
+                        loadFile("file://" + fileName);
                         return;
                     }
                 }
@@ -501,16 +525,51 @@ Rectangle {
             }
             onTextChanged: {
                 selectorText = selectorTextEdit.text;
-                folderModel.nameFilters = [selectorText + "*"];
+                let folderPath = "";
+                let lastPart = selectorText.slice(selectorText.lastIndexOf("/") + 1);
+                if (selectorText.lastIndexOf("/") > 0) {
+                    folderPath = selectorText.slice(0, selectorText.lastIndexOf("/") + 1);
+                    if ("file://" + root.folder + folderPath != folderModel.folder) {
+                        appload.sendMessage(300, folderPath);
+                        folderModel.folder = "file://" + root.folder + folderPath;
+                    }
+                    console.log(folderModel.folder.toString());
+                    if (selectorText.slice(-1) == "/") {
+                        selectorTextEdit.cursorPosition = selectorTextEdit.text.length;
+                    }
+                }
+                else {
+                    folderModel.folder = "file://" + root.folder;
+                }
+                folderModel.nameFilters = [selectorText.slice(folderPath.length) + "*.md"];
+                for (var i = 0; i < folderModel.count; i++) {
+                    if (folderModel.get(i, "fileName").startsWith(lastPart)) {
+                        console.log(folderModel.get(i, "fileName"));
+                        selectorList.currentIndex = i;
+                        break;
+                    }
+                }
             }
             Keys.onPressed: (event) => {
                 if (event.key == Qt.Key_Enter || event.key == Qt.Key_Return){
                     if (!selectorList.currentItem) {
-                        newFile(selectorText);
-                        loadFile(selectorText);
+                        newFile("file://" + root.folder + selectorText);
+                        loadFile("file://" + root.folder + selectorText);
                     }
                     else {
-                        loadFile(selectorList.currentItem.text);
+                        if (!selectorList.currentItem.text.startsWith(selectorText.slice(selectorText.lastIndexOf("/") + 1))) {
+                            newFile("file://" + root.folder + selectorText);
+                            loadFile("file://" + root.folder + selectorText);
+                        }
+                        else if (selectorList.currentItem.text.endsWith(".md")) {
+                            loadFile(folderModel.folder + selectorList.currentItem.text);
+                        }
+                        else {
+                            selectorTextEdit.text = folderModel.folder.toString().slice(("file://" + root.folder).length) + selectorList.currentItem.text + "/";
+                            selectorTextEdit.cursorPosition = selectorTextEdit.text.length;
+                            event.accepted = true;
+                            return;
+                        }
                     }
                     selector = false;
                     event.accepted = true;
@@ -548,10 +607,14 @@ Rectangle {
                 palette.text: "black"
                 font.pointSize: 24
                 onClicked: {
-                    loadFile(fileName);
+                    if (fileName.endsWith(".md")) {
+                        loadFile(folderModel.folder + fileName);
+                    }
+                    else {
+                        selectorTextEdit.text = folderModel.folder.toString().slice(("file://" + root.folder).length) + fileName + "/";
+                    }
                 }
-            }
-            
+            } 
         }
     }
 }
