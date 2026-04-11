@@ -585,8 +585,8 @@ Rectangle {
                             }
                             else if (selectorList.currentItem.text == ".. (D)" && folderModel.folder.toString() != folderModel.rootFolder.toString()) {
                                 let currentFolderNoSlash = folderModel.folder.toString().slice(0, -1);
-                                let secondToLastIndex = currentFolder.lastIndexOf("/");
-                                selectorTextEdit.text = folderModel.folder.toString().slice(folderModel.rootFolder.toString().length, secondToLastIndex);
+                                let secondToLastIndex = currentFolderNoSlash.lastIndexOf("/");
+                                selectorTextEdit.text = folderModel.folder.toString().slice(folderModel.rootFolder.toString().length, secondToLastIndex + 1);
                                 selectorList.currentIndex = -1;
                             }
                             else {
@@ -662,7 +662,7 @@ Rectangle {
                         else if (fileName == "..") {
                             let currentFolderNoSlash = folderModel.folder.toString().slice(0, -1);
                             let secondToLastIndex = currentFolderNoSlash.lastIndexOf("/");
-                            selectorTextEdit.text = folderModel.folder.toString().slice(folderModel.rootFolder.toString().length, secondToLastIndex);
+                            selectorTextEdit.text = folderModel.folder.toString().slice(folderModel.rootFolder.toString().length, secondToLastIndex + 1);
                             selectorList.currentIndex = -1;
                         }
                         else {
