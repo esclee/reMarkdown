@@ -579,11 +579,11 @@ Rectangle {
                             loadFile(folderModel.folder + selectorList.currentItem.text);
                         }
                         else {
-                            if (selectorList.currentItem.text == ". (D)") {
+                            if (selectorList.currentItem.text == ".") {
                                 selectorTextEdit.text = folderModel.folder.toString().slice(("file://" + root.folder).length);
                                 selectorList.currentIndex = -1;
                             }
-                            else if (selectorList.currentItem.text == ".. (D)" && folderModel.folder.toString() != folderModel.rootFolder.toString()) {
+                            else if (selectorList.currentItem.text == ".." && folderModel.folder.toString() != folderModel.rootFolder.toString()) {
                                 let currentFolderNoSlash = folderModel.folder.toString().slice(0, -1);
                                 let secondToLastIndex = currentFolderNoSlash.lastIndexOf("/");
                                 selectorTextEdit.text = folderModel.folder.toString().slice(folderModel.rootFolder.toString().length, secondToLastIndex + 1);
@@ -647,7 +647,7 @@ Rectangle {
             delegate: ItemDelegate {
                 width: parent.width - 10
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: fileIsDir ? fileName + " (D)" : fileName
+                text: fileIsDir && fileName != "." && fileName != ".." ? fileName + " (D)" : fileName
                 palette.text: "black"
                 font.pointSize: 24
                 onClicked: {
