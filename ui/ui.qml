@@ -156,6 +156,7 @@ Rectangle {
         xhr.onreadystatechange = function () {
             if (xhr.readyState == XMLHttpRequest.DONE) {
                 let res = xhr.responseText;
+                selectorTextEdit.text = root.currentFolder.slice(root.folder.length);
                 selector = false;
                 editState = true;
                 file = fileUrl;
@@ -164,7 +165,6 @@ Rectangle {
             }
         };
         docHTML = "";
-        selectorTextEdit.text = "";
         xhr.send();
     }
     function saveFile() {
@@ -186,12 +186,12 @@ Rectangle {
                 root.close();
                 return;
             }
-            else if (!editState) {
-                toggleView();
-            }
-            else {
+            else if (editState) {
                 saveFile();
                 selector = true;
+            }
+            else {
+                toggleView();
             }
         }
         else if (event.key == Qt.Key_Meta || event.key == Qt.Key_Alt) {
@@ -391,7 +391,7 @@ Rectangle {
 
             Keys.onReleased: (event) => {
                 handleKeyEvent(event);
-                if (event.key == Qt.Key_Escape || event.key == Qt.Key_Meta) {
+                if (event.key == Qt.Key_Escape || event.key == Qt.Key_Meta || Qt.Key_Alt) {
                     return;
                 }
                 if (editState) {
