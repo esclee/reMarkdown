@@ -206,6 +206,7 @@ Rectangle {
         folder: "file://" + root.folder
         rootFolder: "file://" + root.folder
         nameFilters: ["*.md"]
+        caseSensitive: false
         sortField: FolderListModel.Type
         showDirs: true
         showDotAndDotDot: true
@@ -555,7 +556,7 @@ Rectangle {
                 folderModel.nameFilters = [lastPart + "*.md"];
                 let noItemStartsWith = true;
                 for (var i = 0; i < selectorList.count; i++) {
-                    if (selectorList.itemAtIndex(i).text.startsWith(lastPart)) {
+                    if (selectorList.itemAtIndex(i).text.toLowerCase().startsWith(lastPart.toLowerCase())) {
                         selectorList.currentIndex = i;
                         noItemStartsWith = false;
                         break;
@@ -630,7 +631,7 @@ Rectangle {
                 let noItemStartsWith = true;
                 let lastPart = selectorTextEdit.text.slice(selectorTextEdit.text.lastIndexOf("/") + 1);
                 for (var i = 0; i < selectorList.count; i++) {
-                    if (selectorList.itemAtIndex(i).text.startsWith(lastPart)) {
+                    if (selectorList.itemAtIndex(i).text.toLowerCase().startsWith(lastPart.toLowerCase())) {
                         selectorList.currentIndex = i;
                         noItemStartsWith = false;
                         break;
