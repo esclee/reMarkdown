@@ -1,10 +1,21 @@
 # reMarkdown, a lightweight Markdown editor for the reMarkable tablet
 
-reMarkdown is a lightweight Markdown editor for the [reMarkable tablet](https://remarkable.com), to be used via [AppLoad](https://github.com/asivery/rm-appload) by asivery. It is an approximate reimplementation of dps's [reMarkable keyWriter](https://github.com/dps/remarkable-keywriter), with a go backend (special credit to StarNumber's [reRadar24](https://github.com/StarNumber12046/reRadar24) from which I got the code for the go-to-AppLoad communication layer).
+reMarkdown is a lightweight Markdown editor for the [reMarkable tablet](https://remarkable.com), to be used via [AppLoad](https://github.com/asivery/rm-appload) by asivery. It is an approximate reimplementation of dps's [reMarkable keyWriter](https://github.com/dps/remarkable-keywriter) with a go backend (special credit to StarNumber's [reRadar24](https://github.com/StarNumber12046/reRadar24) from which I got the code for the go-to-AppLoad communication layer).
 
 reMarkdown has been tested on the reMarkable Paper Pro using the Type Folio. In fact, editing this very README file is how reMarkdown was tested.
 
+## How to install
+
 **Note**: This version of reMarkdown relies on a new feature of AppLoad that is not available in AppLoad release versions <= 0.5.0. You can either build AppLoad from source or wait until a new release is available.
+
+AppLoad must be installed on your reMarkable tablet, and your build environment should have qt6 and go.
+
+- Clone this repo and enter the folder.
+- Ensure build.sh is executable (`chmod +x build.sh`).
+- Run `build.sh`.
+- Copy the resulting `rmd` folder to your tablet's appload location (`scp -rp rmd root@10.11.99.1:~/xovi/exthome/appload`) and reload appload.
+
+If you have an rM2, then instead of `build.sh`, use `build-rm2.md`. But note that reMarkdown is not tested on rM2.
 
 ## How to use reMarkdown
 
@@ -23,11 +34,9 @@ From the editing view, hitting the escape key will save the file and open the se
 ### Subfolders
 
 Subfolder support is a WIP.
-- By default, the selector shows all .md files in the current folder (filtered by the text box) as well as all subfolders (not filtered). You can toggle the visibility of the subfolders by tapping on the right edge of the screen.
-- Through the textbox: typing a folder's relative path from `/home/root/reMarkdown/` including the trailing `/` will open that folder. If the folder does not exist, it will be created for you.
-	- e.g. if you type `subfolder/subfolder2/` in the textbox, you will see all .md files in `/home/root/reMarkdown/subfolder/subfolder2/` as well as all subfolders within that folder (assuming subfolder visibility is on).
-	- e.g. if you type `subfolder/subfolder2` in the textbox, you will see all .md files in `/home/root/reMardown/subfolder` whose file names start with `subfolder2` as well as any subfolders (regardless of what the name is) within `/home/root/reMardown/subfolder` (assuming subfolder visibility is on).
-- Through the selector: the selector will by default show all .md files in the current directory (filtered by the textbox) as well as all subdirectories in the current directory, essentially by typing in the textbox for you.
+- By default, the selector shows all .md files in the current folder as well as all subfolders. Subfolders marked by (D) after the folder name. You can enter a subfolder by selecting the subfolder via the selector or typing the name of the subfolder followed by a `/`. If the subfolder you specified does not exist, it will be created for you. You can toggle the visibility of the subfolders by tapping on the right edge of the screen.
+
+**Note**: due to how QML's [FolderListModel](https://doc.qt.io/qt-6/qml-qt-labs-folderlistmodel-folderlistmodel.html) is implemented, subfolders are not filtered. For instance, if your `/home/root/reMarkdown/` folder has two markdown files--`markdown.md` and `textfile.md`--as well as a subfolder `subfolder`, when you open reMarkdown, you will see all three listed in the selector. Once you type `m`, `textfile.md` will no longer be visible since it is an `.md` file that does not start with an `m`, but `subfolder` will still be visible since subfolders are not filtered.
 
 ## Why not stick with the stock reMarkable notebooks?
 

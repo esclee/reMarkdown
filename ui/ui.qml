@@ -50,6 +50,7 @@ Rectangle {
     property int foldercheck: -1
     property string curFilePath: ""
     property string currentFolder: "/home/root/reMarkdown/"
+    property string stub: ""
 
     signal close
     function unloading() {
@@ -165,6 +166,7 @@ Rectangle {
             }
         };
         docHTML = "";
+        stub = "";
         xhr.send();
     }
     function saveFile() {
@@ -204,15 +206,9 @@ Rectangle {
         folder: "file://" + root.folder
         rootFolder: "file://" + root.folder
         nameFilters: ["*.md"]
-        sortReversed: true
         sortField: FolderListModel.Type
         showDirs: true
         showDotAndDotDot: true
-        onFolderChanged: {
-            if (selectorTextEdit.text.endsWith("/../")) {
-                selectorTextEdit.text = folder.toString().slice(rootFolder.toString().length);
-            }
-        }
     }
 
     Component.onCompleted: {
@@ -476,7 +472,6 @@ Rectangle {
                 }
                 else if (link.startsWith(root.folder) && fileName.endsWith(".md")) {
                     let linkedFileFolder = link.slice(root.folder.length, link.lastIndexOf("/") + 1);
-                    console.log(linkedFileFolder);
                     if (linkedFileFolder.length > 0) {
                         appload.sendMessage(300, linkedFileFolder);
                     }
@@ -534,13 +529,13 @@ Rectangle {
                 selectorText = selectorTextEdit.text;
                 let folderPath = "";
                 let lastPart = selectorText.slice(selectorText.lastIndexOf("/") + 1);
+                root.stub = lastPart;
                 if (selectorText.lastIndexOf("/") > 0) {
                     folderPath = selectorText.slice(0, selectorText.lastIndexOf("/") + 1);
                     if ("file://" + root.folder + folderPath != folderModel.folder) {
                         appload.sendMessage(300, folderPath);
                         folderModel.folder = "file://" + root.folder + folderPath;
                     }
-                    console.log(folderModel.folder.toString());
                     if (selectorText.slice(-1) == "/") {
                         selectorTextEdit.cursorPosition = selectorTextEdit.text.length;
                     }
@@ -548,13 +543,29 @@ Rectangle {
                 else {
                     folderModel.folder = "file://" + root.folder;
                 }
-                folderModel.nameFilters = [selectorText.slice(folderPath.length) + "*.md"];
-                for (var i = 0; i < folderModel.count; i++) {
-                    if (folderModel.get(i, "fileName").startsWith(lastPart)) {
-                        console.log(folderModel.get(i, "fileName"));
+                if (lastPart.endsWith(".md")) {
+                    lastPart = lastPart.slice(0, lastPart.length - ".md".length);
+                }
+                else if (lastPart.endsWith(".m")) {
+                    lastPart = lastPart.slice(0, lastPart.length - ".m".length);
+                }
+                else if (lastPart.endsWith(".")) {
+                    lastPart = lastPart.slice(0, lastPart.length - ".".length);
+                }
+                folderModel.nameFilters = [lastPart + "*.md"];
+                let noItemStartsWith = true;
+                for (var i = 0; i < selectorList.count; i++) {
+                    if (selectorList.itemAtIndex(i).text.startsWith(lastPart)) {
                         selectorList.currentIndex = i;
+                        noItemStartsWith = false;
                         break;
                     }
+                }
+                if (noItemStartsWith) {
+                    selectorList.currentIndex = -1;
+                }
+                if (selectorTextEdit.text == "" || selectorTextEdit.text.endsWith("/")) {
+                    selectorList.currentIndex = -1;
                 }
             }
             Keys.onPressed: (event) => {
@@ -564,24 +575,22 @@ Rectangle {
                         loadFile("file://" + root.folder + selectorText);
                     }
                     else {
-                        if (!selectorList.currentItem.text.startsWith(selectorText.slice(selectorText.lastIndexOf("/") + 1))) {
-                            newFile("file://" + root.folder + selectorText);
-                            loadFile("file://" + root.folder + selectorText);
-                        }
-                        else if (selectorList.currentItem.text.endsWith(".md")) {
+                        if (selectorList.currentItem.text.endsWith(".md")) {
                             loadFile(folderModel.folder + selectorList.currentItem.text);
                         }
                         else {
-                            if (selectorList.currentItem.text == ".") {
+                            if (selectorList.currentItem.text == ". (D)") {
                                 selectorTextEdit.text = folderModel.folder.toString().slice(("file://" + root.folder).length);
+                                selectorList.currentIndex = -1;
                             }
-                            else if (selectorList.currentItem.text == ".." && folderModel.folder.toString() != folderModel.rootFolder.toString()) {
+                            else if (selectorList.currentItem.text == ".. (D)" && folderModel.folder.toString() != folderModel.rootFolder.toString()) {
                                 let currentFolderNoSlash = folderModel.folder.toString().slice(0, -1);
                                 let secondToLastIndex = currentFolder.lastIndexOf("/");
                                 selectorTextEdit.text = folderModel.folder.toString().slice(folderModel.rootFolder.toString().length, secondToLastIndex);
+                                selectorList.currentIndex = -1;
                             }
                             else {
-                                selectorTextEdit.text = folderModel.folder.toString().slice(("file://" + root.folder).length) + selectorList.currentItem.text + "/";
+                                selectorTextEdit.text = folderModel.folder.toString().slice(("file://" + root.folder).length) + selectorList.currentItem.text.slice(0, selectorList.currentItem.text.length - " (D)".length) + "/";
                             }
                             selectorTextEdit.cursorPosition = selectorTextEdit.text.length;
                             event.accepted = true;
@@ -608,6 +617,7 @@ Rectangle {
             anchors.left: parent.left
             anchors.right: parent.right
             highlightResizeDuration: 0
+            currentIndex: -1
             highlight: Rectangle {
                 color: "transparent"
                 border.width: 5
@@ -616,11 +626,28 @@ Rectangle {
                 width: parent.width
                 z: 2
             }
+            onCountChanged: {
+                let noItemStartsWith = true;
+                let lastPart = selectorTextEdit.text.slice(selectorTextEdit.text.lastIndexOf("/") + 1);
+                for (var i = 0; i < selectorList.count; i++) {
+                    if (selectorList.itemAtIndex(i).text.startsWith(lastPart)) {
+                        selectorList.currentIndex = i;
+                        noItemStartsWith = false;
+                        break;
+                    }
+                }
+                if (noItemStartsWith) {
+                    selectorList.currentIndex = -1;
+                }
+                if (selectorTextEdit.text == "" || selectorTextEdit.text.endsWith("/")) {
+                    selectorList.currentIndex = -1;
+                }
+            }
             model: folderModel
             delegate: ItemDelegate {
                 width: parent.width - 10
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: fileName
+                text: fileIsDir ? fileName + " (D)" : fileName
                 palette.text: "black"
                 font.pointSize: 24
                 onClicked: {
@@ -630,11 +657,13 @@ Rectangle {
                     else {
                         if (fileName == ".") {
                             selectorTextEdit.text = folderModel.folder.toString().slice(folderModel.rootFolder.toString().length);
+                            selectorList.currentIndex = -1;
                         }
                         else if (fileName == "..") {
                             let currentFolderNoSlash = folderModel.folder.toString().slice(0, -1);
-                            let secondToLastIndex = currentFolder.lastIndexOf("/");
+                            let secondToLastIndex = currentFolderNoSlash.lastIndexOf("/");
                             selectorTextEdit.text = folderModel.folder.toString().slice(folderModel.rootFolder.toString().length, secondToLastIndex);
+                            selectorList.currentIndex = -1;
                         }
                         else {
                             selectorTextEdit.text = folderModel.folder.toString().slice(("file://" + root.folder).length) + fileName + "/";
