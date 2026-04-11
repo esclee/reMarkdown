@@ -202,10 +202,17 @@ Rectangle {
     FolderListModel {
         id: folderModel
         folder: "file://" + root.folder
+        rootFolder: "file://" + root.folder
         nameFilters: ["*.md"]
         sortReversed: true
         sortField: FolderListModel.Type
         showDirs: true
+        showDotAndDotDot: true
+        onFolderChanged: {
+            if (selectorTextEdit.text.endsWith("/../")) {
+                selectorTextEdit.text = folder.toString().slice(rootFolder.toString().length);
+            }
+        }
     }
 
     Component.onCompleted: {
@@ -565,7 +572,17 @@ Rectangle {
                             loadFile(folderModel.folder + selectorList.currentItem.text);
                         }
                         else {
-                            selectorTextEdit.text = folderModel.folder.toString().slice(("file://" + root.folder).length) + selectorList.currentItem.text + "/";
+                            if (selectorList.currentItem.text == ".") {
+                                selectorTextEdit.text = folderModel.folder.toString().slice(("file://" + root.folder).length);
+                            }
+                            else if (selectorList.currentItem.text == ".." && folderModel.folder.toString() != folderModel.rootFolder.toString()) {
+                                let currentFolderNoSlash = folderModel.folder.toString().slice(0, -1);
+                                let secondToLastIndex = currentFolder.lastIndexOf("/");
+                                selectorTextEdit.text = folderModel.folder.toString().slice(folderModel.rootFolder.toString().length, secondToLastIndex);
+                            }
+                            else {
+                                selectorTextEdit.text = folderModel.folder.toString().slice(("file://" + root.folder).length) + selectorList.currentItem.text + "/";
+                            }
                             selectorTextEdit.cursorPosition = selectorTextEdit.text.length;
                             event.accepted = true;
                             return;
@@ -611,7 +628,17 @@ Rectangle {
                         loadFile(folderModel.folder + fileName);
                     }
                     else {
-                        selectorTextEdit.text = folderModel.folder.toString().slice(("file://" + root.folder).length) + fileName + "/";
+                        if (fileName == ".") {
+                            selectorTextEdit.text = folderModel.folder.toString().slice(folderModel.rootFolder.toString().length);
+                        }
+                        else if (fileName == "..") {
+                            let currentFolderNoSlash = folderModel.folder.toString().slice(0, -1);
+                            let secondToLastIndex = currentFolder.lastIndexOf("/");
+                            selectorTextEdit.text = folderModel.folder.toString().slice(folderModel.rootFolder.toString().length, secondToLastIndex);
+                        }
+                        else {
+                            selectorTextEdit.text = folderModel.folder.toString().slice(("file://" + root.folder).length) + fileName + "/";
+                        }
                     }
                 }
             } 
