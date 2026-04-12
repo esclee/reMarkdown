@@ -503,29 +503,33 @@ Rectangle {
             onLinkActivated: (link) => {
                 console.log("Link activated: " + link);
                 let fileName = link;
-                if (fileName.endsWith(".md") && !(fileName.includes("/"))) {
+                if (link.endsWith(".md") && !(link.startsWith("/"))) {
+                    let linkedFileFolder = root.currentFolder.slice(root.folder.length) + link.slice(0, link.lastIndexOf("/") + 1);
+                    if (linkedFileFolder.length > 0) {
+                        appload.sendMessage(300, linkedFileFolder);
+                    }
                     let xhr = new XMLHttpRequest();
-                    xhr.open('GET', "file://" + root.currentFolder + fileName, false);
+                    xhr.open('GET', "file://" + root.currentFolder + link, false);
                     xhr.send();
                     if (xhr.status === 200 || xhr.status === 0) {
-                        console.log(link + " is a .md file in " + root.currentFolder + ", loading.");
+                        console.log(link + " is a .md file in " + root.currentFolder + linkedFileFolder + ", loading.");
                         saveFile();
-                        loadFile("file://" + root.currentFolder + fileName);
+                        loadFile("file://" + root.currentFolder + link);
                         return;
                     }
                 }
-                else if (link.startsWith(root.folder) && fileName.endsWith(".md")) {
+                else if (link.startsWith(root.folder) && link.endsWith(".md")) {
                     let linkedFileFolder = link.slice(root.folder.length, link.lastIndexOf("/") + 1);
                     if (linkedFileFolder.length > 0) {
                         appload.sendMessage(300, linkedFileFolder);
                     }
                     let xhr = new XMLHttpRequest();
-                    xhr.open('GET', "file://" + fileName, false);
+                    xhr.open('GET', "file://" + link, false);
                     xhr.send();
                     if (xhr.status === 200 || xhr.status === 0) {
                         console.log(link + " is a .md file in " + root.folder +", loading.");
                         saveFile();
-                        loadFile("file://" + fileName);
+                        loadFile("file://" + link);
                         return;
                     }
                 }

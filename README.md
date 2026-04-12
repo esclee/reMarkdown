@@ -25,7 +25,11 @@ The file will open in a plaintext editor, and you can start editing!
 
 If you want to see what the `.md` file would look like with formatting, hit the meta key (on the Type Folio that is the left side opt key) or the alt key. [gomarkdown/markdown](https://github.com/gomarkdown/markdown) is used to turn the `.md` file's content into html. Hitting the meta/alt key again or the escape key will return you to the editing view.
 
-In the render view, if you click on a link, reMarkdown will open the link if it deems the link to be reMarkdown-compatible, i.e., if the link target is either `<some-file-name>.md` or `/home/root/<some-file-name>.md`. If the file does not exist, then this will create a new file.
+In the render view, if you click on a link, reMarkdown will open the link if it deems the link to be reMarkdown-compatible. There are two types of reMarkdown-compatible links.
+- Relative link to an `.md` file. If the source of the link is the file `/home/root/reMarkdown/subfolder/file1.md` and the target is `subdir/file2.md`, this is a reMarkdown-compatible link for the file `/home/root/reMarkdown/subfolder/subdir/file2.md`.
+- Absolute link to an `.md` file that is in `/home/root/reMarkdown/...`.
+
+If the target file does not exist, it will be created.
 
 From the editing view, hitting the escape key will save the file and open the selector view. There, you can return to the document or open a different document to edit. Hitting the escape key while in the selector view will exit reMarkdown.
 
