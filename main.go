@@ -37,11 +37,6 @@ func mdToHTML(md []byte) []byte {
 }
 
 func (state *reMarkdownState) HandleMessage(replier *appload.BackendReplier, message appload.Message) {
-	if message.MsgType == appload.MsgSystemTerminate {
-		fmt.Println("Received message to terminate!")
-		// os.Exit(0)
-		return
-	}
 	if message.MsgType > 1000 {
 		replier.SendMessage(200, "Init")
 	}

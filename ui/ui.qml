@@ -51,14 +51,18 @@ Rectangle {
     property string curFilePath: ""
     property string currentFolder: "/home/root/reMarkdown/"
     property string stub: ""
+    property bool closeViaAppload: true
 
     signal close
     function unloading() {
         if (!selector) {
             saveFile();
         }
+        if (closeViaAppload){
+            closeViaAppload = false;
+            appload.terminate();
+        }
         console.log("We're unloading!");
-        appload.terminate();
     }
 
     AppLoad {
@@ -78,7 +82,8 @@ Rectangle {
                     renderer.text = docHTML;
                     break;
                 case 201:
-                    root.close();
+                    root.closeViaAppload = false;
+                    appload.terminate();
                     break;
                 case 301:
                 case 302:
@@ -185,7 +190,8 @@ Rectangle {
     function handleKeyEvent(event){
         if (event.key == Qt.Key_Escape) {
             if (selector) {
-                root.close();
+                root.closeViaAppload = false;
+                appload.terminate();
                 return;
             }
             else if (editState) {
@@ -236,7 +242,8 @@ Rectangle {
             anchors.fill: parent
             onClicked: {
                 if (selector) {
-                    root.close();
+                    closeViaAppload = false;
+                    appload.terminate();
                 }
                 else if (!editState) {
                     toggleView();
@@ -615,8 +622,8 @@ Rectangle {
             id: selectorList
             anchors.top: selectorTextEdit.bottom
             anchors.bottom: parent.bottom
-            anchors.left: parent.left
-            anchors.right: parent.right
+            width: parent.width - 10
+            anchors.horizontalCenter: parent.horizontalCenter
             highlightResizeDuration: 0
             currentIndex: -1
             highlight: Rectangle {
@@ -624,7 +631,7 @@ Rectangle {
                 border.width: 5
                 border.color: "black"
                 radius: 5
-                width: parent.width
+                width: ListView.view.width
                 z: 2
             }
             onCountChanged: {
@@ -646,8 +653,7 @@ Rectangle {
             }
             model: folderModel
             delegate: ItemDelegate {
-                width: parent.width - 10
-                anchors.horizontalCenter: parent.horizontalCenter
+                width: ListView.view.width
                 text: fileIsDir && fileName != "." && fileName != ".." ? fileName + " (D)" : fileName
                 palette.text: "black"
                 font.pointSize: 24
