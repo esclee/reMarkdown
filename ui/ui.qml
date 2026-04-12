@@ -296,8 +296,10 @@ Rectangle {
     Flickable {
 	id: flick
 	width: parent.width * 0.95
-	height: parent.height * 0.95
-        anchors.centerIn: parent
+	height: Qt.inputMethod.visible ? parent.height * 0.95 - Qt.inputMethod.keyboardRectangle.height : parent.height * 0.95
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: parent.top
+        anchors.topMargin: parent.height * 0.025
         boundsBehavior: Flickable.StopAtBounds
         contentWidth: editState? editor.paintedWidth : renderer.paintedWidth
         bottomMargin: parent.height /2
