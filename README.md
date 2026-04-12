@@ -15,28 +15,36 @@ AppLoad must be installed on your reMarkable tablet, and your build environment 
 - Run `build.sh`.
 - Copy the resulting `rmd` folder to your tablet's appload location (`scp -rp rmd root@10.11.99.1:~/xovi/exthome/appload`) and reload appload.
 
-If you have an rM2, then instead of `build.sh`, use `build-rm2.md`. But note that reMarkdown is not tested on rM2.
+If you have an rM2, then instead of `build.sh`, use `build-rm2.sh`. But note that reMarkdown is not tested on rM2.
 
 ## How to use reMarkdown
 
-When you open reMarkdown, you will see a file selector, which will list all .md files available in the folder `/home/root/reMarkdown`. If the folder does not exist, it will be created. You can either open an existing file via the selector (as you type, the list will filter down to files that have names starting with what you have typed) or creating a new file by typing in a new filename.
+When you open reMarkdown, you will see a file selector, which will list all `.md` files available in the folder `/home/root/reMarkdown`. If the folder does not exist, it will be created. You can either open an existing file via the selector (as you type, the list will filter down to files that have names starting with what you have typed) or creating a new file by typing in a new filename.
 
 The file will open in a plaintext editor, and you can start editing!
 
-If you want to see what the .md file would look like with formatting, hit the meta key (on the Type Folio that is the left side opt key). [gomarkdown/markdown](https://github.com/gomarkdown/markdown) is used to turn the .md file's content into html. Hitting the meta key again or the escape key will return you to the editing view.
+If you want to see what the `.md` file would look like with formatting, hit the meta key (on the Type Folio that is the left side opt key). [gomarkdown/markdown](https://github.com/gomarkdown/markdown) is used to turn the `.md` file's content into html. Hitting the meta key again or the escape key will return you to the editing view.
 
 In the render view, if you click on a link, reMarkdown will open the link if it deems the link to be reMarkdown-compatible, i.e., if the link target is either `<some-file-name>.md` or `/home/root/<some-file-name>.md`. If the file does not exist, then this will create a new file.
 
 From the editing view, hitting the escape key will save the file and open the selector view. There, you can return to the document or open a different document to edit. Hitting the escape key while in the selector view will exit reMarkdown.
 
-**Note**: Tapping the right edge of the screen will toggle between the editing view and the render view (i.e., same behavior as hitting the opt/alt key). Tapping the left edge of the screen while in the render view will toggle back to the editing view; while in the editing view will save the file and open the selector view; while in the selector view will exit reMarkdown. In other words, tapping on the left edge has the same behavior as hitting the escape key.
+**Note**: Tapping the right edge of the screen will toggle between the editing view and the render view (i.e., same behavior as hitting the opt/alt key). Tapping the bottom 90% of the left edge (see [External keyboard](#external-keyboard)) of the screen while in the render view will toggle back to the editing view; while in the editing view will save the file and open the selector view; while in the selector view will exit reMarkdown. In other words, tapping on the left edge has the same behavior as hitting the escape key.
 
 ### Subfolders
 
 Subfolder support is a WIP.
-- By default, the selector shows all .md files in the current folder as well as all subfolders. Subfolders marked by (D) after the folder name. You can enter a subfolder by selecting the subfolder via the selector or typing the name of the subfolder followed by a `/`. If the subfolder you specified does not exist, it will be created for you. You can toggle the visibility of the subfolders by tapping on the right edge of the screen.
+- By default, the selector shows all `.md` files in the current folder as well as all subfolders. Subfolders marked by (D) after the folder name. You can enter a subfolder by selecting the subfolder via the selector or typing the name of the subfolder followed by a `/`. If the subfolder you specified does not exist, it will be created for you. You can toggle the visibility of the subfolders by tapping on the right edge of the screen.
 
 **Note**: due to how QML's [FolderListModel](https://doc.qt.io/qt-6/qml-qt-labs-folderlistmodel-folderlistmodel.html) is implemented, subfolders are not filtered. For instance, if your `/home/root/reMarkdown/` folder has two markdown files--`markdown.md` and `textfile.md`--as well as a subfolder `subfolder`, when you open reMarkdown, you will see all three listed in the selector. Once you type `m`, `textfile.md` will no longer be visible since it is an `.md` file that does not start with an `m`, but `subfolder` will still be visible since subfolders are not filtered.
+
+### External keyboard
+
+When the tablet does not detect a connected Type Folio, a virtual keyboard shows up when you are in text edit mode (i.e., in selector view or editor view). But if you are using an external keyboard, you may wish to hide the virtual keyboard. There are two ways to do it:
+- Entering F1 via your external keyboard.
+- Tapping the top 10% of the left edge of the screen.
+
+If you disconnect your external keyboard and want to make the virtual keyboard visible again, simply tap the top 10% of the left edge of the screen again. 
 
 ## Why not stick with the stock reMarkable notebooks?
 

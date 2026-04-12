@@ -52,6 +52,7 @@ Rectangle {
     property string currentFolder: "/home/root/reMarkdown/"
     property string stub: ""
     property bool closeViaAppload: true
+    property bool extKeyboard: false
 
     signal close
     function unloading() {
@@ -205,6 +206,10 @@ Rectangle {
         else if (event.key == Qt.Key_Meta || event.key == Qt.Key_Alt) {
             toggleView();
         }
+        else if (event.key == Qt.Key_F1) {
+            root.extKeyboard = true;
+            Qt.inputMethod.hide();
+        }
     }
 
     FolderListModel {
@@ -239,7 +244,22 @@ Rectangle {
         height: parent.height
         anchors.left: parent.left
         MouseArea {
-            anchors.fill: parent
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: parent.height * 0.1
+            onClicked: {
+                root.extKeyboard = !root.extKeyboard;
+                if (root.extKeyboard) {
+                    Qt.inputMethod.hide();
+                }
+            }
+        }
+        MouseArea {
+            anchors.bottom: parent.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: parent.height * 0.9
             onClicked: {
                 if (selector) {
                     closeViaAppload = false;
@@ -400,9 +420,17 @@ Rectangle {
                 root.lastType = Date.now();
             }
 
+            onActiveFocusChanged: {
+                if (activeFocus) {
+                    if (root.extKeyboard) {
+                        Qt.inputMethod.hide();
+                    }
+                }
+            }
+
             Keys.onReleased: (event) => {
                 handleKeyEvent(event);
-                if (event.key == Qt.Key_Escape || event.key == Qt.Key_Meta || Qt.Key_Alt) {
+                if (event.key == Qt.Key_Escape || event.key == Qt.Key_Meta || Qt.Key_Alt || event.key == Qt.Key_F1) {
                     return;
                 }
                 if (editState) {
@@ -446,6 +474,11 @@ Rectangle {
 
             onCursorRectangleChanged: {
                 flick.ensureVisible(cursorRectangle);
+            }
+            onCursorPositionChanged: {
+                if (extKeyboard) {
+                    Qt.inputMethod.hide();
+                }
             }
         }
 
@@ -498,7 +531,7 @@ Rectangle {
 
             Keys.onReleased: (event) => {
                 handleKeyEvent(event);
-                if (event.key == Qt.Key_Escape || event.key == Qt.Key_Meta) {
+                if (event.key == Qt.Key_Escape || event.key == Qt.Key_Meta || event.key == Qt.Key_Alt || event.key == Qt.Key_F1) {
                     return;
                 }
             }
@@ -532,6 +565,13 @@ Rectangle {
             Keys.enabled: true
             Component.onCompleted: {
                 selectorTextEdit.forceActiveFocus();
+            }
+            onActiveFocusChanged: {
+                if (activeFocus) {
+                    if (root.extKeyboard) {
+                        Qt.inputMethod.hide();
+                    }
+                }
             }
             onTextChanged: {
                 selectorText = selectorTextEdit.text;
