@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"remarkdown/appload"
 
 	"github.com/gomarkdown/markdown"
@@ -38,7 +39,12 @@ func mdToHTML(md []byte) []byte {
 
 func (state *reMarkdownState) HandleMessage(replier *appload.BackendReplier, message appload.Message) {
 	if message.MsgType > 1000 {
-		replier.SendMessage(200, "Init")
+		out, _ := exec.Command("bash", "-c", "ls -d /sys/class/input/*/*::capslock 2>/dev/null").Output()
+		if string(out) != "" {
+			replier.SendMessage(201, "Init, keyboard detected")
+		} else {
+			replier.SendMessage(200, "Init")
+		}
 	}
 	if message.MsgType == uint32(MarkDownRequest) {
 		fmt.Println("Received a request for html rendering")

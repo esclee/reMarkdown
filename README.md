@@ -40,11 +40,13 @@ Subfolder support is a WIP.
 
 ### External keyboard
 
-When the tablet does not detect a connected Type Folio, a virtual keyboard shows up when you are in text edit mode (i.e., in selector view or editor view). But if you are using an external keyboard, you may wish to hide the virtual keyboard. There are two ways to do it:
+When the tablet does not detect a connected Type Folio, a virtual keyboard shows up when you are in text edit mode (i.e., in selector view or editor view). But if you are using an external keyboard, you may wish to hide the virtual keyboard.
+
+reMarkdown looks for an external keyboard at startup and will automatically hide the virtual keyboard if one is found. This check runs only at startup. If you start reMarkdown without an external keyboard and then connect one, there are two ways to make the virtual keyboard disappear:
 - Entering F1 via your external keyboard.
 - Tapping the top 10% of the left edge of the screen.
 
-If you disconnect your external keyboard and want to make the virtual keyboard visible again, simply tap the top 10% of the left edge of the screen again. 
+If you disconnect your external keyboard while using reMarkdown and want to make the virtual keyboard visible again, simply tap the top 10% of the left edge of the screen. 
 
 ## Why not stick with the stock reMarkable notebooks?
 

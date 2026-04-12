@@ -76,15 +76,16 @@ Rectangle {
                 folderModel.folder = "file://" + root.folder;
                 return;
             }
+            else if (type == 201) {
+                root.extKeyboard = true;
+                Qt.inputMethod.hide();
+                return;
+            }
             switch (type) {
                 case 101:
                     console.log("rendered HTML returned.");
                     docHTML = contents;
                     renderer.text = docHTML;
-                    break;
-                case 201:
-                    root.closeViaAppload = false;
-                    appload.terminate();
                     break;
                 case 301:
                 case 302:
