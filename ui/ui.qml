@@ -164,7 +164,7 @@ Rectangle {
         xhr.onreadystatechange = function () {
             if (xhr.readyState == XMLHttpRequest.DONE) {
                 let res = xhr.responseText;
-                selectorTextEdit.text = root.currentFolder.slice(root.folder.length);
+                selectorTextEdit.text = Qt.resolvedUrl(root.currentFolder).toString().split(root.folder).pop();
                 selector = false;
                 editState = true;
                 file = fileUrl;
@@ -502,8 +502,11 @@ Rectangle {
 
             onLinkActivated: (link) => {
                 console.log("Link activated: " + link);
-                let fileName = link;
                 if (link.endsWith(".md") && !(link.startsWith("/"))) {
+                    if (!Qt.resolvedUrl(root.currentFolder + link).toString().includes("/home/root/reMarkdown/")) {
+                        console.log("Does not resolve to a folder within " + root.folder);
+                        return;
+                    }
                     let linkedFileFolder = root.currentFolder.slice(root.folder.length) + link.slice(0, link.lastIndexOf("/") + 1);
                     if (linkedFileFolder.length > 0) {
                         appload.sendMessage(300, linkedFileFolder);
@@ -519,6 +522,10 @@ Rectangle {
                     }
                 }
                 else if (link.startsWith(root.folder) && link.endsWith(".md")) {
+                    if (!Qt.resolvedUrl(link).toString().includes("/home/root/reMarkdown/")) {
+                        console.log("Does not resolve to a folder within " + root.folder);
+                        return;
+                    }
                     let linkedFileFolder = link.slice(root.folder.length, link.lastIndexOf("/") + 1);
                     if (linkedFileFolder.length > 0) {
                         appload.sendMessage(300, linkedFileFolder);
@@ -588,8 +595,14 @@ Rectangle {
                 if (selectorText.lastIndexOf("/") > 0) {
                     folderPath = selectorText.slice(0, selectorText.lastIndexOf("/") + 1);
                     if ("file://" + root.folder + folderPath != folderModel.folder) {
-                        appload.sendMessage(300, folderPath);
-                        folderModel.folder = "file://" + root.folder + folderPath;
+                        if (!Qt.resolvedUrl(root.folder + selectorText).toString().includes("/home/root/reMarkdown/")) {
+                            console.log("Does not resolve to a folder within " + root.folder);
+                            folderModel.folder = "file://" + root.folder;
+                            selectorTextEdit.text = "";
+                        } else {
+                            appload.sendMessage(300, folderPath);
+                            folderModel.folder = "file://" + root.folder + folderPath;
+                        }
                     }
                     if (selectorText.slice(-1) == "/") {
                         selectorTextEdit.cursorPosition = selectorTextEdit.text.length;

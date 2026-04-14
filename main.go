@@ -6,7 +6,9 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"remarkdown/appload"
+	"strings"
 
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/html"
@@ -53,7 +55,11 @@ func (state *reMarkdownState) HandleMessage(replier *appload.BackendReplier, mes
 	}
 	if message.MsgType == uint32(FolderRequest) {
 		fmt.Println("Folder request received")
-		info, err := os.Stat("/home/root/reMarkdown/" + message.Contents)
+		folderPath := filepath.Clean("/home/root/reMarkdown/" + message.Contents)
+		if !strings.HasPrefix(folderPath, "/home/root/reMarkdown") {
+			log.Fatalf("Attempted to access folder not in /home/root/reMarkdown")
+		}
+		info, err := os.Stat(folderPath)
 		if err == nil {
 			if info.IsDir() {
 				replier.SendMessage(301, "Is a folder")
@@ -62,7 +68,7 @@ func (state *reMarkdownState) HandleMessage(replier *appload.BackendReplier, mes
 			}
 		}
 		if errors.Is(err, os.ErrNotExist) {
-			err2 := os.MkdirAll("/home/root/reMarkdown/"+message.Contents, os.ModePerm)
+			err2 := os.MkdirAll(folderPath, os.ModePerm)
 			if err2 != nil {
 				log.Fatalf("error while creating folder")
 			}
