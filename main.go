@@ -10,6 +10,8 @@ import (
 	"remarkdown/appload"
 	"strings"
 
+	xhtml "golang.org/x/net/html"
+
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/html"
 	"github.com/gomarkdown/markdown/parser"
@@ -51,7 +53,18 @@ func (state *reMarkdownState) HandleMessage(replier *appload.BackendReplier, mes
 	if message.MsgType == uint32(MarkDownRequest) {
 		fmt.Println("Received a request for html rendering")
 		rendered_text := mdToHTML([]byte(message.Contents))
+		doc, err := xhtml.Parse(strings.NewReader(string(rendered_text)))
+		if err != nil {
+			log.Fatalf("error parsing HTML: %v", err)
+		}
+		wordCount := 0
+		for n := range doc.Descendants() {
+			if n.Type == xhtml.TextNode {
+				wordCount += len(strings.Fields(n.Data))
+			}
+		}
 		replier.SendMessage(101, string(rendered_text))
+		replier.SendMessage(102, fmt.Sprint(wordCount))
 	}
 	if message.MsgType == uint32(FolderRequest) {
 		fmt.Println("Folder request received")

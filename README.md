@@ -23,22 +23,15 @@ When you open reMarkdown, you will see a file selector, which will list all `.md
 
 The file will open in a plaintext editor, and you can start editing!
 
-If you want to see what the `.md` file would look like with formatting, hit the meta key (on the Type Folio that is the left side opt key) or the alt key. [gomarkdown/markdown](https://github.com/gomarkdown/markdown) is used to turn the `.md` file's content into html. Hitting the meta/alt key again or the escape key will return you to the editing view.
-
-In the render view, if you click on a link, reMarkdown will open the link if it deems the link to be reMarkdown-compatible. There are two types of reMarkdown-compatible links.
-- Relative link to an `.md` file. If the source of the link is the file `/home/root/reMarkdown/subfolder/file1.md` and the target is `subdir/file2.md`, this is a reMarkdown-compatible link for the file `/home/root/reMarkdown/subfolder/subdir/file2.md`.
-- Absolute link to an `.md` file that is in `/home/root/reMarkdown/...`.
-
-If the target file does not exist, it will be created.
+If you want to see what the `.md` file would look like with formatting, hit the meta key (on the Type Folio that is the left side opt key) or the alt key. [gomarkdown/markdown](https://github.com/gomarkdown/markdown) is used to turn the `.md` file's content into html which is then rendered on screen. Hitting the meta/alt key again or the escape key will return you to the editing view.
 
 From the editing view, hitting the escape key will save the file and open the selector view. There, you can return to the document or open a different document to edit. Hitting the escape key while in the selector view will exit reMarkdown.
 
-**Note**: Tapping the right edge of the screen will toggle between the editing view and the render view (i.e., same behavior as hitting the meta/alt key). Tapping the bottom 90% of the left edge (see [External keyboard](#external-keyboard)) of the screen while in the render view will toggle back to the editing view; while in the editing view will save the file and open the selector view; while in the selector view will exit reMarkdown. In other words, tapping on the left edge has the same behavior as hitting the escape key.
+**Note**: Tapping the bottom 90% of the right edge of the screen will toggle between the editing view and the render view (i.e., same behavior as hitting the meta/alt key). Tapping the bottom 90% of the left edge of the screen while in the render view will toggle back to the editing view; while in the editing view will save the file and open the selector view; while in the selector view will exit reMarkdown. In other words, tapping on the left edge has the same behavior as hitting the escape key.
 
 ### Subfolders
 
-Subfolder support is a WIP.
-- By default, the selector shows all `.md` files in the current folder as well as all subfolders. Subfolders marked by (D) after the folder name. You can enter a subfolder by selecting the subfolder via the selector or typing the name of the subfolder followed by a `/`. If the subfolder you specified does not exist, it will be created for you. You can toggle the visibility of the subfolders by tapping on the right edge of the screen.
+By default, the selector shows all `.md` files in the current folder as well as all subfolders. Subfolders marked by (D) after the folder name. You can enter a subfolder by selecting the subfolder via the selector or typing the name of the subfolder followed by a `/`. If the subfolder you specified does not exist, it will be created for you. You can toggle the visibility of the subfolders by tapping on the bottom 90% of the right edge of the screen.
 
 **Note**: due to how QML's [FolderListModel](https://doc.qt.io/qt-6/qml-qt-labs-folderlistmodel-folderlistmodel.html) is implemented, subfolders are not filtered. For instance, if your `/home/root/reMarkdown/` folder has two markdown files--`markdown.md` and `textfile.md`--as well as a subfolder `subfolder`, when you open reMarkdown, you will see all three listed in the selector. Once you type `m`, `textfile.md` will no longer be visible since it is an `.md` file that does not start with an `m`, but `subfolder` will still be visible since subfolders are not filtered.
 
@@ -50,7 +43,19 @@ reMarkdown looks for an external keyboard at startup and will automatically hide
 - Entering F1 via your external keyboard.
 - Tapping the top 10% of the left edge of the screen.
 
-If you disconnect your external keyboard while using reMarkdown and want to make the virtual keyboard visible again, simply tap the top 10% of the left edge of the screen. 
+If you disconnect your external keyboard while using reMarkdown and want to make the virtual keyboard visible again, simply tap the top 10% of the left edge of the screen.
+
+### Links
+
+In the render view, if you click on a link, reMarkdown will open the link if it deems the link to be reMarkdown-compatible. There are two types of reMarkdown-compatible links.
+- Relative link to an `.md` file. If the source of the link is the file `/home/root/reMarkdown/subfolder/file1.md` and the target is `subdir/file2.md`, this is a reMarkdown-compatible link for the file `/home/root/reMarkdown/subfolder/subdir/file2.md`.
+- Absolute link to an `.md` file that is in `/home/root/reMarkdown/...`.
+
+If the target file does not exist, it will be created.
+
+### Word count
+
+In the render view, tapping the top 10% of the right edge will display the approximate word count of the current document; tapping the top 10% of the right edge again will remove the word count. Word count only includes text elements.
 
 ## Why not stick with the stock reMarkable notebooks?
 

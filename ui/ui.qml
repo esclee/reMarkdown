@@ -53,6 +53,7 @@ Rectangle {
     property string stub: ""
     property bool closeViaAppload: true
     property bool extKeyboard: false
+    property int wordCount: 0
 
     signal close
     function unloading() {
@@ -87,6 +88,9 @@ Rectangle {
                     docHTML = contents;
                     renderer.text = docHTML;
                     break;
+                case 102:
+                    console.log("rendered HTML word count: " + contents);
+                    root.wordCount = parseInt(contents, 10);
                 case 301:
                 case 302:
                     foldercheck = 1;
@@ -125,6 +129,7 @@ Rectangle {
             }
         } else {
             console.log("Toggling to edit view");
+            wc.visible = false;
             editState = true;
             editor.text = root.doc;
             editor.cursorPosition = cursorPosition;
@@ -282,7 +287,10 @@ Rectangle {
         height: parent.height
         anchors.right: parent.right
         MouseArea {
-            anchors.fill: parent
+            anchors.bottom: parent.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: parent.height * 0.9
             onClicked: {
                 if (!selector) {
                     toggleView();
@@ -290,6 +298,16 @@ Rectangle {
                 else {
                     folderModel.showDirs = !folderModel.showDirs;
                 }
+            }
+        }
+        MouseArea {
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: parent.height * 0.1
+            onClicked: {
+                wc.Text.text = "Word count: " + root.wordCount;
+                wc.visible = !wc.visible && !editState && !selector;
             }
         }
     }
@@ -553,6 +571,23 @@ Rectangle {
             onCursorRectangleChanged: {
                 flick.ensureVisible(cursorRectangle);
             }
+        }
+    }
+
+    Rectangle {
+        id: wc
+        width: parent.width * 0.5
+        height: 100
+        anchors.top: parent.top
+        anchors.horizontalCenter: parent.horizontalCenter
+        color: "white"
+        visible: false
+        z: 2
+        Text {
+            text: "Word count: " + wordCount
+            anchors.centerIn: parent
+            font.pointSize: 24
+            font.family: "Noto Mono"
         }
     }
 
