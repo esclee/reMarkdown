@@ -55,7 +55,7 @@ If the target file does not exist, it will be created.
 
 ### Word count
 
-In the render view, tapping the top 10% of the right edge will display the approximate word count of the current document; tapping the top 10% of the right edge again will remove the word count. Word count only includes text elements.
+In the render view, tapping the top 10% of the right edge or hitting the "W" key on your keyboard will display the approximate word count of the current document; tapping the top 10% of the right edge or hitting the "W" key on your keyboard again will remove the word count. Word count only includes text elements.
 
 ## Why not stick with the stock reMarkable notebooks?
 

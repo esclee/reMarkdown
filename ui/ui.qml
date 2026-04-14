@@ -216,6 +216,11 @@ Rectangle {
             root.extKeyboard = true;
             Qt.inputMethod.hide();
         }
+        else if (event.key == Qt.Key_W) {
+            if (!selector && !editState) {
+                wc.visible = !wc.visible;
+            }
+        }
     }
 
     FolderListModel {
