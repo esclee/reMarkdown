@@ -50,14 +50,21 @@ Rectangle {
     property int foldercheck: -1
     property string curFilePath: ""
     property string currentFolder: "/home/root/reMarkdown/"
+    property string stub: ""
+    property bool closeViaAppload: true
+    property bool extKeyboard: false
+    property int wordCount: 0
 
     signal close
     function unloading() {
         if (!selector) {
             saveFile();
         }
+        if (closeViaAppload){
+            closeViaAppload = false;
+            appload.terminate();
+        }
         console.log("We're unloading!");
-        appload.terminate();
     }
 
     AppLoad {
@@ -70,15 +77,20 @@ Rectangle {
                 folderModel.folder = "file://" + root.folder;
                 return;
             }
+            else if (type == 201) {
+                root.extKeyboard = true;
+                Qt.inputMethod.hide();
+                return;
+            }
             switch (type) {
                 case 101:
                     console.log("rendered HTML returned.");
                     docHTML = contents;
                     renderer.text = docHTML;
                     break;
-                case 201:
-                    root.close();
-                    break;
+                case 102:
+                    console.log("rendered HTML word count: " + contents);
+                    root.wordCount = parseInt(contents, 10);
                 case 301:
                 case 302:
                     foldercheck = 1;
@@ -117,6 +129,7 @@ Rectangle {
             }
         } else {
             console.log("Toggling to edit view");
+            wc.visible = false;
             editState = true;
             editor.text = root.doc;
             editor.cursorPosition = cursorPosition;
@@ -156,6 +169,7 @@ Rectangle {
         xhr.onreadystatechange = function () {
             if (xhr.readyState == XMLHttpRequest.DONE) {
                 let res = xhr.responseText;
+                selectorTextEdit.text = Qt.resolvedUrl(root.currentFolder).toString().split(root.folder).pop();
                 selector = false;
                 editState = true;
                 file = fileUrl;
@@ -164,7 +178,7 @@ Rectangle {
             }
         };
         docHTML = "";
-        selectorTextEdit.text = "";
+        stub = "";
         xhr.send();
     }
     function saveFile() {
@@ -183,29 +197,41 @@ Rectangle {
     function handleKeyEvent(event){
         if (event.key == Qt.Key_Escape) {
             if (selector) {
-                root.close();
+                root.closeViaAppload = false;
+                appload.terminate();
                 return;
             }
-            else if (!editState) {
-                toggleView();
-            }
-            else {
+            else if (editState) {
                 saveFile();
                 selector = true;
+            }
+            else {
+                toggleView();
             }
         }
         else if (event.key == Qt.Key_Meta || event.key == Qt.Key_Alt) {
             toggleView();
+        }
+        else if (event.key == Qt.Key_F1) {
+            root.extKeyboard = true;
+            Qt.inputMethod.hide();
+        }
+        else if (event.key == Qt.Key_W) {
+            if (!selector && !editState) {
+                wc.visible = !wc.visible;
+            }
         }
     }
 
     FolderListModel {
         id: folderModel
         folder: "file://" + root.folder
+        rootFolder: "file://" + root.folder
         nameFilters: ["*.md"]
-        sortReversed: true
+        caseSensitive: false
         sortField: FolderListModel.Type
         showDirs: true
+        showDotAndDotDot: true
     }
 
     Component.onCompleted: {
@@ -229,10 +255,26 @@ Rectangle {
         height: parent.height
         anchors.left: parent.left
         MouseArea {
-            anchors.fill: parent
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: parent.height * 0.1
+            onClicked: {
+                root.extKeyboard = !root.extKeyboard;
+                if (root.extKeyboard) {
+                    Qt.inputMethod.hide();
+                }
+            }
+        }
+        MouseArea {
+            anchors.bottom: parent.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: parent.height * 0.9
             onClicked: {
                 if (selector) {
-                    root.close();
+                    closeViaAppload = false;
+                    appload.terminate();
                 }
                 else if (!editState) {
                     toggleView();
@@ -250,7 +292,10 @@ Rectangle {
         height: parent.height
         anchors.right: parent.right
         MouseArea {
-            anchors.fill: parent
+            anchors.bottom: parent.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: parent.height * 0.9
             onClicked: {
                 if (!selector) {
                     toggleView();
@@ -260,13 +305,25 @@ Rectangle {
                 }
             }
         }
+        MouseArea {
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: parent.height * 0.1
+            onClicked: {
+                wc.Text.text = "Word count: " + root.wordCount;
+                wc.visible = !wc.visible && !editState && !selector;
+            }
+        }
     }
     
     Flickable {
 	id: flick
 	width: parent.width * 0.95
-	height: parent.height * 0.95
-        anchors.centerIn: parent
+	height: Qt.inputMethod.visible ? parent.height * 0.95 - Qt.inputMethod.keyboardRectangle.height : parent.height * 0.95
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: parent.top
+        anchors.topMargin: parent.height * 0.025
         boundsBehavior: Flickable.StopAtBounds
         contentWidth: editState? editor.paintedWidth : renderer.paintedWidth
         bottomMargin: parent.height /2
@@ -389,9 +446,17 @@ Rectangle {
                 root.lastType = Date.now();
             }
 
+            onActiveFocusChanged: {
+                if (activeFocus) {
+                    if (root.extKeyboard) {
+                        Qt.inputMethod.hide();
+                    }
+                }
+            }
+
             Keys.onReleased: (event) => {
                 handleKeyEvent(event);
-                if (event.key == Qt.Key_Escape || event.key == Qt.Key_Meta) {
+                if (event.key == Qt.Key_Escape || event.key == Qt.Key_Meta || Qt.Key_Alt || event.key == Qt.Key_F1) {
                     return;
                 }
                 if (editState) {
@@ -436,6 +501,11 @@ Rectangle {
             onCursorRectangleChanged: {
                 flick.ensureVisible(cursorRectangle);
             }
+            onCursorPositionChanged: {
+                if (extKeyboard) {
+                    Qt.inputMethod.hide();
+                }
+            }
         }
 
         TextArea {
@@ -455,31 +525,41 @@ Rectangle {
 
             onLinkActivated: (link) => {
                 console.log("Link activated: " + link);
-                let fileName = link;
-                if (fileName.endsWith(".md") && !(fileName.includes("/"))) {
-                    let xhr = new XMLHttpRequest();
-                    xhr.open('GET', "file://" + root.currentFolder + fileName, false);
-                    xhr.send();
-                    if (xhr.status === 200 || xhr.status === 0) {
-                        console.log(link + " is a .md file in " + root.currentFolder + ", loading.");
-                        saveFile();
-                        loadFile("file://" + root.currentFolder + fileName);
+                if (link.endsWith(".md") && !(link.startsWith("/"))) {
+                    if (!Qt.resolvedUrl(root.currentFolder + link).toString().includes("/home/root/reMarkdown/")) {
+                        console.log("Does not resolve to a folder within " + root.folder);
                         return;
                     }
-                }
-                else if (link.startsWith(root.folder) && fileName.endsWith(".md")) {
-                    let linkedFileFolder = link.slice(root.folder.length, link.lastIndexOf("/") + 1);
-                    console.log(linkedFileFolder);
+                    let linkedFileFolder = root.currentFolder.slice(root.folder.length) + link.slice(0, link.lastIndexOf("/") + 1);
                     if (linkedFileFolder.length > 0) {
                         appload.sendMessage(300, linkedFileFolder);
                     }
                     let xhr = new XMLHttpRequest();
-                    xhr.open('GET', "file://" + fileName, false);
+                    xhr.open('GET', "file://" + root.currentFolder + link, false);
+                    xhr.send();
+                    if (xhr.status === 200 || xhr.status === 0) {
+                        console.log(link + " is a .md file in " + root.currentFolder + linkedFileFolder + ", loading.");
+                        saveFile();
+                        loadFile("file://" + root.currentFolder + link);
+                        return;
+                    }
+                }
+                else if (link.startsWith(root.folder) && link.endsWith(".md")) {
+                    if (!Qt.resolvedUrl(link).toString().includes("/home/root/reMarkdown/")) {
+                        console.log("Does not resolve to a folder within " + root.folder);
+                        return;
+                    }
+                    let linkedFileFolder = link.slice(root.folder.length, link.lastIndexOf("/") + 1);
+                    if (linkedFileFolder.length > 0) {
+                        appload.sendMessage(300, linkedFileFolder);
+                    }
+                    let xhr = new XMLHttpRequest();
+                    xhr.open('GET', "file://" + link, false);
                     xhr.send();
                     if (xhr.status === 200 || xhr.status === 0) {
                         console.log(link + " is a .md file in " + root.folder +", loading.");
                         saveFile();
-                        loadFile("file://" + fileName);
+                        loadFile("file://" + link);
                         return;
                     }
                 }
@@ -488,7 +568,7 @@ Rectangle {
 
             Keys.onReleased: (event) => {
                 handleKeyEvent(event);
-                if (event.key == Qt.Key_Escape || event.key == Qt.Key_Meta) {
+                if (event.key == Qt.Key_Escape || event.key == Qt.Key_Meta || event.key == Qt.Key_Alt || event.key == Qt.Key_F1) {
                     return;
                 }
             }
@@ -496,6 +576,23 @@ Rectangle {
             onCursorRectangleChanged: {
                 flick.ensureVisible(cursorRectangle);
             }
+        }
+    }
+
+    Rectangle {
+        id: wc
+        width: parent.width * 0.5
+        height: 100
+        anchors.top: parent.top
+        anchors.horizontalCenter: parent.horizontalCenter
+        color: "white"
+        visible: false
+        z: 2
+        Text {
+            text: "Word count: " + wordCount
+            anchors.centerIn: parent
+            font.pointSize: 24
+            font.family: "Noto Mono"
         }
     }
 
@@ -523,17 +620,30 @@ Rectangle {
             Component.onCompleted: {
                 selectorTextEdit.forceActiveFocus();
             }
+            onActiveFocusChanged: {
+                if (activeFocus) {
+                    if (root.extKeyboard) {
+                        Qt.inputMethod.hide();
+                    }
+                }
+            }
             onTextChanged: {
                 selectorText = selectorTextEdit.text;
                 let folderPath = "";
                 let lastPart = selectorText.slice(selectorText.lastIndexOf("/") + 1);
+                root.stub = lastPart;
                 if (selectorText.lastIndexOf("/") > 0) {
                     folderPath = selectorText.slice(0, selectorText.lastIndexOf("/") + 1);
                     if ("file://" + root.folder + folderPath != folderModel.folder) {
-                        appload.sendMessage(300, folderPath);
-                        folderModel.folder = "file://" + root.folder + folderPath;
+                        if (!Qt.resolvedUrl(root.folder + selectorText).toString().includes("/home/root/reMarkdown/")) {
+                            console.log("Does not resolve to a folder within " + root.folder);
+                            folderModel.folder = "file://" + root.folder;
+                            selectorTextEdit.text = "";
+                        } else {
+                            appload.sendMessage(300, folderPath);
+                            folderModel.folder = "file://" + root.folder + folderPath;
+                        }
                     }
-                    console.log(folderModel.folder.toString());
                     if (selectorText.slice(-1) == "/") {
                         selectorTextEdit.cursorPosition = selectorTextEdit.text.length;
                     }
@@ -541,13 +651,29 @@ Rectangle {
                 else {
                     folderModel.folder = "file://" + root.folder;
                 }
-                folderModel.nameFilters = [selectorText.slice(folderPath.length) + "*.md"];
-                for (var i = 0; i < folderModel.count; i++) {
-                    if (folderModel.get(i, "fileName").startsWith(lastPart)) {
-                        console.log(folderModel.get(i, "fileName"));
+                if (lastPart.endsWith(".md")) {
+                    lastPart = lastPart.slice(0, lastPart.length - ".md".length);
+                }
+                else if (lastPart.endsWith(".m")) {
+                    lastPart = lastPart.slice(0, lastPart.length - ".m".length);
+                }
+                else if (lastPart.endsWith(".")) {
+                    lastPart = lastPart.slice(0, lastPart.length - ".".length);
+                }
+                folderModel.nameFilters = [lastPart + "*.md"];
+                let noItemStartsWith = true;
+                for (var i = 0; i < selectorList.count; i++) {
+                    if (selectorList.itemAtIndex(i).text.toLowerCase().startsWith(lastPart.toLowerCase())) {
                         selectorList.currentIndex = i;
+                        noItemStartsWith = false;
                         break;
                     }
+                }
+                if (noItemStartsWith) {
+                    selectorList.currentIndex = -1;
+                }
+                if (selectorTextEdit.text == "" || selectorTextEdit.text.endsWith("/")) {
+                    selectorList.currentIndex = -1;
                 }
             }
             Keys.onPressed: (event) => {
@@ -557,15 +683,23 @@ Rectangle {
                         loadFile("file://" + root.folder + selectorText);
                     }
                     else {
-                        if (!selectorList.currentItem.text.startsWith(selectorText.slice(selectorText.lastIndexOf("/") + 1))) {
-                            newFile("file://" + root.folder + selectorText);
-                            loadFile("file://" + root.folder + selectorText);
-                        }
-                        else if (selectorList.currentItem.text.endsWith(".md")) {
+                        if (selectorList.currentItem.text.endsWith(".md")) {
                             loadFile(folderModel.folder + selectorList.currentItem.text);
                         }
                         else {
-                            selectorTextEdit.text = folderModel.folder.toString().slice(("file://" + root.folder).length) + selectorList.currentItem.text + "/";
+                            if (selectorList.currentItem.text == ".") {
+                                selectorTextEdit.text = folderModel.folder.toString().slice(("file://" + root.folder).length);
+                                selectorList.currentIndex = -1;
+                            }
+                            else if (selectorList.currentItem.text == ".." && folderModel.folder.toString() != folderModel.rootFolder.toString()) {
+                                let currentFolderNoSlash = folderModel.folder.toString().slice(0, -1);
+                                let secondToLastIndex = currentFolderNoSlash.lastIndexOf("/");
+                                selectorTextEdit.text = folderModel.folder.toString().slice(folderModel.rootFolder.toString().length, secondToLastIndex + 1);
+                                selectorList.currentIndex = -1;
+                            }
+                            else {
+                                selectorTextEdit.text = folderModel.folder.toString().slice(("file://" + root.folder).length) + selectorList.currentItem.text.slice(0, selectorList.currentItem.text.length - " (D)".length) + "/";
+                            }
                             selectorTextEdit.cursorPosition = selectorTextEdit.text.length;
                             event.accepted = true;
                             return;
@@ -588,22 +722,39 @@ Rectangle {
             id: selectorList
             anchors.top: selectorTextEdit.bottom
             anchors.bottom: parent.bottom
-            anchors.left: parent.left
-            anchors.right: parent.right
+            width: parent.width - 10
+            anchors.horizontalCenter: parent.horizontalCenter
             highlightResizeDuration: 0
+            currentIndex: -1
             highlight: Rectangle {
                 color: "transparent"
                 border.width: 5
                 border.color: "black"
                 radius: 5
-                width: parent.width
+                width: ListView.view.width
                 z: 2
+            }
+            onCountChanged: {
+                let noItemStartsWith = true;
+                let lastPart = selectorTextEdit.text.slice(selectorTextEdit.text.lastIndexOf("/") + 1);
+                for (var i = 0; i < selectorList.count; i++) {
+                    if (selectorList.itemAtIndex(i).text.toLowerCase().startsWith(lastPart.toLowerCase())) {
+                        selectorList.currentIndex = i;
+                        noItemStartsWith = false;
+                        break;
+                    }
+                }
+                if (noItemStartsWith) {
+                    selectorList.currentIndex = -1;
+                }
+                if (selectorTextEdit.text == "" || selectorTextEdit.text.endsWith("/")) {
+                    selectorList.currentIndex = -1;
+                }
             }
             model: folderModel
             delegate: ItemDelegate {
-                width: parent.width - 10
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: fileName
+                width: ListView.view.width
+                text: fileIsDir && fileName != "." && fileName != ".." ? fileName + " (D)" : fileName
                 palette.text: "black"
                 font.pointSize: 24
                 onClicked: {
@@ -611,7 +762,19 @@ Rectangle {
                         loadFile(folderModel.folder + fileName);
                     }
                     else {
-                        selectorTextEdit.text = folderModel.folder.toString().slice(("file://" + root.folder).length) + fileName + "/";
+                        if (fileName == ".") {
+                            selectorTextEdit.text = folderModel.folder.toString().slice(folderModel.rootFolder.toString().length);
+                            selectorList.currentIndex = -1;
+                        }
+                        else if (fileName == "..") {
+                            let currentFolderNoSlash = folderModel.folder.toString().slice(0, -1);
+                            let secondToLastIndex = currentFolderNoSlash.lastIndexOf("/");
+                            selectorTextEdit.text = folderModel.folder.toString().slice(folderModel.rootFolder.toString().length, secondToLastIndex + 1);
+                            selectorList.currentIndex = -1;
+                        }
+                        else {
+                            selectorTextEdit.text = folderModel.folder.toString().slice(("file://" + root.folder).length) + fileName + "/";
+                        }
                     }
                 }
             } 

@@ -5,7 +5,12 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"remarkdown/appload"
+	"strings"
+
+	xhtml "golang.org/x/net/html"
 
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/html"
@@ -37,22 +42,37 @@ func mdToHTML(md []byte) []byte {
 }
 
 func (state *reMarkdownState) HandleMessage(replier *appload.BackendReplier, message appload.Message) {
-	if message.MsgType == appload.MsgSystemTerminate {
-		fmt.Println("Received message to terminate!")
-		os.Exit(0)
-		return
-	}
 	if message.MsgType > 1000 {
-		replier.SendMessage(200, "Init")
+		out, _ := exec.Command("bash", "-c", "ls -d /sys/class/input/*/*::capslock 2>/dev/null").Output()
+		if string(out) != "" {
+			replier.SendMessage(201, "Init, keyboard detected")
+		} else {
+			replier.SendMessage(200, "Init")
+		}
 	}
 	if message.MsgType == uint32(MarkDownRequest) {
 		fmt.Println("Received a request for html rendering")
 		rendered_text := mdToHTML([]byte(message.Contents))
+		doc, err := xhtml.Parse(strings.NewReader(string(rendered_text)))
+		if err != nil {
+			log.Fatalf("error parsing HTML: %v", err)
+		}
+		wordCount := 0
+		for n := range doc.Descendants() {
+			if n.Type == xhtml.TextNode {
+				wordCount += len(strings.Fields(n.Data))
+			}
+		}
 		replier.SendMessage(101, string(rendered_text))
+		replier.SendMessage(102, fmt.Sprint(wordCount))
 	}
 	if message.MsgType == uint32(FolderRequest) {
 		fmt.Println("Folder request received")
-		info, err := os.Stat("/home/root/reMarkdown/" + message.Contents)
+		folderPath := filepath.Clean("/home/root/reMarkdown/" + message.Contents)
+		if !strings.HasPrefix(folderPath, "/home/root/reMarkdown") {
+			log.Fatalf("Attempted to access folder not in /home/root/reMarkdown")
+		}
+		info, err := os.Stat(folderPath)
 		if err == nil {
 			if info.IsDir() {
 				replier.SendMessage(301, "Is a folder")
@@ -61,7 +81,7 @@ func (state *reMarkdownState) HandleMessage(replier *appload.BackendReplier, mes
 			}
 		}
 		if errors.Is(err, os.ErrNotExist) {
-			err2 := os.MkdirAll("/home/root/reMarkdown/"+message.Contents, os.ModePerm)
+			err2 := os.MkdirAll(folderPath, os.ModePerm)
 			if err2 != nil {
 				log.Fatalf("error while creating folder")
 			}
