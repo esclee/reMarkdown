@@ -679,8 +679,15 @@ Rectangle {
             Keys.onPressed: (event) => {
                 if (event.key == Qt.Key_Enter || event.key == Qt.Key_Return){
                     if (!selectorList.currentItem) {
-                        newFile("file://" + root.folder + selectorText);
-                        loadFile("file://" + root.folder + selectorText);
+                        if (selectorText == "..") {
+                            selectorTextEdit.text = "";
+                            event.accepted = true;
+                            return;
+                        }
+                        else {
+                            newFile("file://" + root.folder + selectorText);
+                            loadFile("file://" + root.folder + selectorText);
+                        }
                     }
                     else {
                         if (selectorList.currentItem.text.endsWith(".md")) {
