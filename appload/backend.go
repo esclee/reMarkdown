@@ -28,6 +28,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"sync"
@@ -143,7 +144,7 @@ func (al *AppLoad) Run() error {
 		// Read header
 		n, err := al.conn.Read(headerBuf)
 		if err != nil || n != 8 {
-			if errors.Is(err, net.ErrClosed) || errors.Is(err, syscall.ECONNRESET) {
+			if errors.Is(err, net.ErrClosed) || errors.Is(err, syscall.ECONNRESET) || errors.Is(err, io.EOF) {
 				break
 			}
 			return fmt.Errorf("error reading header: %w", err)
