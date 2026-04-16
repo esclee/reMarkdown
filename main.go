@@ -42,15 +42,17 @@ func mdToHTML(md []byte) []byte {
 }
 
 func (state *reMarkdownState) HandleMessage(replier *appload.BackendReplier, message appload.Message) {
-	if message.MsgType > 1000 {
+	if message.MsgType == uint32(appload.MsgSystemTerminate) {
+		fmt.Println("Termiate request received")
+		return
+	} else if message.MsgType > 1000 {
 		out, _ := exec.Command("bash", "-c", "ls -d /sys/class/input/*/*::capslock 2>/dev/null").Output()
 		if string(out) != "" {
 			replier.SendMessage(201, "Init, keyboard detected")
 		} else {
 			replier.SendMessage(200, "Init")
 		}
-	}
-	if message.MsgType == uint32(MarkDownRequest) {
+	} else if message.MsgType == uint32(MarkDownRequest) {
 		fmt.Println("Received a request for html rendering")
 		rendered_text := mdToHTML([]byte(message.Contents))
 		doc, err := xhtml.Parse(strings.NewReader(string(rendered_text)))
@@ -65,8 +67,7 @@ func (state *reMarkdownState) HandleMessage(replier *appload.BackendReplier, mes
 		}
 		replier.SendMessage(101, string(rendered_text))
 		replier.SendMessage(102, fmt.Sprint(wordCount))
-	}
-	if message.MsgType == uint32(FolderRequest) {
+	} else if message.MsgType == uint32(FolderRequest) {
 		fmt.Println("Folder request received")
 		folderPath := filepath.Clean("/home/root/reMarkdown/" + message.Contents)
 		if !strings.HasPrefix(folderPath, "/home/root/reMarkdown") {

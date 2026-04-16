@@ -60,11 +60,11 @@ Rectangle {
         if (!selector) {
             saveFile();
         }
-        if (closeViaAppload){
-            closeViaAppload = false;
+        console.log("We're unloading!");
+        if (closeViaAppload) {
+            console.log("Terminating via appload control");
             appload.terminate();
         }
-        console.log("We're unloading!");
     }
 
     AppLoad {
@@ -199,7 +199,6 @@ Rectangle {
             if (selector) {
                 root.closeViaAppload = false;
                 appload.terminate();
-                return;
             }
             else if (editState) {
                 saveFile();
@@ -273,7 +272,7 @@ Rectangle {
             height: parent.height * 0.9
             onClicked: {
                 if (selector) {
-                    closeViaAppload = false;
+                    root.closeViaAppload = false;
                     appload.terminate();
                 }
                 else if (!editState) {
@@ -679,8 +678,15 @@ Rectangle {
             Keys.onPressed: (event) => {
                 if (event.key == Qt.Key_Enter || event.key == Qt.Key_Return){
                     if (!selectorList.currentItem) {
-                        newFile("file://" + root.folder + selectorText);
-                        loadFile("file://" + root.folder + selectorText);
+                        if (selectorText == "..") {
+                            selectorTextEdit.text = "";
+                            event.accepted = true;
+                            return;
+                        }
+                        else {
+                            newFile("file://" + root.folder + selectorText);
+                            loadFile("file://" + root.folder + selectorText);
+                        }
                     }
                     else {
                         if (selectorList.currentItem.text.endsWith(".md")) {
