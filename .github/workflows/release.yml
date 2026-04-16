@@ -1,0 +1,54 @@
+name: Build and Release
+
+on: push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [arm64, armv7h]
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Generate version
+        id: version
+        run: |
+          # Generate semantic version based on date and run number
+          VERSION="0.1.${{ github.run_number }}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Generated version: ${VERSION}"
+      
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+      
+      - name: Install Qt dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qt6-tools-dev qttools5-dev
+      
+      - name: Build project for ${{ matrix.arch }}
+        run: |
+          chmod +x build.sh
+          ./build.sh ${{ matrix.arch }}
+      
+      - name: Create release archive
+        run: |
+          ARCH=${{ matrix.arch }}
+          VERSION=${{ steps.version.outputs.version }}
+          ZIP_NAME="reMarkdown-${ARCH}-${VERSION}.zip"
+          cd rmd
+          zip -r "../${ZIP_NAME}" backend manifest.json resources.rcc icon.png
+          cd ..
+          echo "ZIP_FILE=${ZIP_NAME}" >> $GITHUB_ENV
+      
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          files: ${{ env.ZIP_FILE }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
