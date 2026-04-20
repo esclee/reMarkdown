@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,9 +14,10 @@ import (
 
 	xhtml "golang.org/x/net/html"
 
-	"github.com/gomarkdown/markdown"
-	"github.com/gomarkdown/markdown/html"
-	"github.com/gomarkdown/markdown/parser"
+	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/extension"
+	"github.com/yuin/goldmark/parser"
+	"github.com/yuin/goldmark/renderer/html"
 )
 
 type MessageType uint32
@@ -29,17 +31,21 @@ type reMarkdownState struct {
 }
 
 func mdToHTML(md []byte) []byte {
-	// create markdown parser with extensions
-	extensions := parser.CommonExtensions | parser.AutoHeadingIDs | parser.NoEmptyLineBeforeBlock | parser.Strikethrough | parser.Footnotes
-	p := parser.NewWithExtensions(extensions)
-	doc := p.Parse(md)
-
-	// create HTML renderer with extensions
-	htmlFlags := html.CommonFlags | html.HrefTargetBlank
-	opts := html.RendererOptions{Flags: htmlFlags}
-	renderer := html.NewRenderer(opts)
-
-	return markdown.Render(doc, renderer)
+	gm := goldmark.New(
+		goldmark.WithExtensions(extension.GFM, extension.Footnote, extension.Typographer, extension.CJK),
+		goldmark.WithParserOptions(
+			parser.WithAutoHeadingID(),
+		),
+		goldmark.WithRendererOptions(
+			html.WithHardWraps(),
+			html.WithXHTML(),
+		),
+	)
+	var buf bytes.Buffer
+	if err := gm.Convert(md, &buf); err != nil {
+		return nil
+	}
+	return buf.Bytes()
 }
 
 func (state *reMarkdownState) HandleMessage(replier *appload.BackendReplier, message appload.Message) {
@@ -56,10 +62,16 @@ func (state *reMarkdownState) HandleMessage(replier *appload.BackendReplier, mes
 	} else if message.MsgType == uint32(MarkDownRequest) {
 		fmt.Println("Received a request for html rendering")
 		rendered_text := mdToHTML([]byte(message.Contents))
+		if rendered_text == nil {
+			fmt.Println("error parsing .md")
+			replier.SendMessage(103, ",.md")
+			return
+		}
 		doc, err := xhtml.Parse(strings.NewReader(string(rendered_text)))
 		if err != nil {
 			fmt.Printf("error parsing HTML: %v", err)
 			replier.SendMessage(103, "HTML")
+			return
 		}
 		wordCount := 0
 		for n := range doc.Descendants() {
@@ -79,6 +91,7 @@ func (state *reMarkdownState) HandleMessage(replier *appload.BackendReplier, mes
 		if err != nil {
 			fmt.Printf("error parsing json: %v", err)
 			replier.SendMessage(103, "JSON")
+			return
 		}
 		replier.SendMessage(101, string(js))
 	} else if message.MsgType == uint32(FolderRequest) {
