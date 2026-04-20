@@ -15,6 +15,7 @@ import (
 	xhtml "golang.org/x/net/html"
 
 	"github.com/yuin/goldmark"
+	emoji "github.com/yuin/goldmark-emoji"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
 	"github.com/yuin/goldmark/renderer/html"
@@ -32,7 +33,7 @@ type reMarkdownState struct {
 
 func mdToHTML(md []byte) []byte {
 	gm := goldmark.New(
-		goldmark.WithExtensions(extension.GFM, extension.Footnote, extension.Typographer, extension.CJK),
+		goldmark.WithExtensions(extension.GFM, extension.Footnote, extension.Typographer, extension.CJK, emoji.Emoji),
 		goldmark.WithParserOptions(
 			parser.WithAutoHeadingID(),
 		),
