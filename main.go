@@ -80,13 +80,16 @@ func (state *reMarkdownState) HandleMessage(replier *appload.BackendReplier, mes
 				wordCount += len(strings.Fields(n.Data))
 			}
 		}
-
+		checked_box := "&#x2705;"
+		unchecked_box := "&#x2b1c;"
+		checked_html := `<input checked="" disabled="" type="checkbox" />`
+		unchecked_html := `<input disabled="" type="checkbox" />`
 		res := struct {
 			WordCount int    `json:"wc"`
 			Text      string `json:"text"`
 		}{
 			WordCount: wordCount,
-			Text:      string(rendered_text),
+			Text:      strings.ReplaceAll(strings.ReplaceAll(string(rendered_text), checked_html, checked_box), unchecked_html, unchecked_box),
 		}
 		js, err := json.Marshal(res)
 		if err != nil {
