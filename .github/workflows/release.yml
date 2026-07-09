@@ -1,0 +1,123 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Determine next SemVer
+        id: semver
+        uses: ietf-tools/semver-action@v1
+        with:
+          token: ${{ github.token }}
+          branch: main
+          majorList: '+SemVer: Major,+Semver: Major,+Major'
+          minorList: '+SemVer: Minor,+Semver: Minor,+Minor'
+          patchList: ''
+          noVersionBumpBehavior: patch
+          noNewCommitBehavior: current
+
+    outputs:
+      version: ${{ steps.semver.outputs.nextStrict }}
+      tag: ${{ steps.semver.outputs.next }}
+
+  build:
+    needs: prepare
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [arm64, armv7h]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set version
+        run: echo "VERSION=${{ needs.prepare.outputs.version }}" >> $GITHUB_ENV
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.25'
+
+      - name: Install Qt dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qt6-tools-dev qttools5-dev
+
+      - name: Build project for ${{ matrix.arch }}
+        run: |
+          chmod +x build.sh
+          ./build.sh ${{ matrix.arch }}
+
+      - name: Create release archive
+        run: |
+          ARCH=${{ matrix.arch }}
+          VERSION=${{ env.VERSION }}
+          ZIP_NAME="reMarkdown-${ARCH}-${VERSION}.zip"
+          cd rmd
+          zip -r "../${ZIP_NAME}" backend manifest.json resources.rcc icon.png
+          cd ..
+          echo "ZIP_FILE=${ZIP_NAME}" >> $GITHUB_ENV
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-zip-${{ matrix.arch }}
+          path: ${{ env.ZIP_FILE }}
+
+  release:
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download arm64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: release-zip-arm64
+          path: artifacts
+
+      - name: Download armv7h artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: release-zip-armv7h
+          path: artifacts
+
+      - name: Create Git tag for release
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          TAG=${{ needs.prepare.outputs.tag }}
+          if [ -z "${TAG}" ]; then
+            echo "ERROR: release tag is empty. Check semver output in the prepare job."
+            exit 1
+          fi
+          if git rev-parse "${TAG}" >/dev/null 2>&1; then
+            echo "Tag ${TAG} already exists."
+          else
+            git tag "${TAG}"
+            git push origin "${TAG}"
+          fi
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v3.0.1
+        with:
+          tag_name: ${{ needs.prepare.outputs.tag }}
+          files: artifacts/*.zip
+          draft: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
