@@ -23,7 +23,7 @@ When you open reMarkdown, you will see a file selector, which will list all `.md
 
 The file will open in a plaintext editor, and you can start editing!
 
-If you want to see what the `.md` file would look like with formatting, hit the meta key (on the Type Folio that is the left side opt key) or the alt key. [gomarkdown/markdown](https://github.com/gomarkdown/markdown) is used to turn the `.md` file's content into html which is then rendered on screen. Hitting the meta/alt key again or the escape key will return you to the editing view.
+If you want to see what the `.md` file would look like with formatting, hit the meta key (on the Type Folio that is the left side opt key) or the alt key. [goldmark](https://github.com/yuin/goldmark) is used to turn the `.md` file's content into html which is then rendered on screen. Hitting the meta/alt key again or the escape key will return you to the editing view.
 
 From the editing view, hitting the escape key will save the file and open the selector view. There, you can return to the document or open a different document to edit. Hitting the escape key while in the selector view will exit reMarkdown.
 
