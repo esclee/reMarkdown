@@ -577,6 +577,34 @@ Rectangle {
                 }
             }
 
+            Keys.onPressed: (event) => {
+                if (event.modifiers & Qt.ControlModifier) {
+                    if (event.key == Qt.Key_Up) {
+                        let prevLineBreak = editor.text.lastIndexOf("\n\n", Math.max(0, editor.cursorPosition - 2));
+                        if (prevLineBreak < 0) {
+                            editor.cursorPosition = 0;
+                        }
+                        else {
+                            editor.cursorPosition = prevLineBreak + 2;
+                        }
+                        event.accepted = true;
+                    }
+                    else if (event.key == Qt.Key_Down) {
+                        let nextLineBreak = editor.text.indexOf("\n\n", editor.cursorPosition);
+                        if (nextLineBreak < 0) {
+                            editor.cursorPosition = editor.length;
+                        }
+                        else {
+                            editor.cursorPosition = nextLineBreak + 2;
+                        }
+                        event.accepted = true;
+                    }
+                    if (event.key == Qt.Key_S) {
+                        saveFile();
+                    }
+                }
+            }
+
             Keys.onReleased: (event) => {
                 handleKeyEvent(event);
                 if (event.key == Qt.Key_Escape || event.key == Qt.Key_Meta || Qt.Key_Alt || event.key == Qt.Key_F1) {
