@@ -831,6 +831,13 @@ Rectangle {
                 }
             }
             Keys.onPressed: (event) => {
+                if (event.modifiers & Qt.ControlModifier) {
+                    if (event.key == Qt.Key_H) {
+                        folderModel.showHidden = !folderModel.showHidden;
+                        event.accepted = true;
+                        return;
+                    }
+                }
                 if (event.key == Qt.Key_Enter || event.key == Qt.Key_Return){
                     if (!selectorList.currentItem) {
                         if (selectorText == "..") {
