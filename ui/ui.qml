@@ -837,6 +837,11 @@ Rectangle {
                         event.accepted = true;
                         return;
                     }
+                    if (event.key == Qt.Key_D) {
+                        folderModel.showDirs = !folderModel.showDirs;
+                        event.accepted = true;
+                        return;
+                    }
                 }
                 if (event.key == Qt.Key_Enter || event.key == Qt.Key_Return){
                     if (!selectorList.currentItem) {
