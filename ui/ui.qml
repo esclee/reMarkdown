@@ -377,6 +377,9 @@ Rectangle {
             onClicked: {
                 wc.Text.text = "Word count: " + root.wordCount;
                 wc.visible = !wc.visible && !editState && !selector;
+                if (selector) {
+                    folderModel.showHidden = !folderModel.showHidden;
+                }
             }
         }
     }
