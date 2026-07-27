@@ -33,11 +33,12 @@ From the editing view, hitting the escape key will save the file and open the se
 
 By default, the selector shows all `.md` files in the current folder as well as all subfolders. Subfolders marked by (D) after the folder name. You can enter a subfolder by selecting the subfolder via the selector or typing the name of the subfolder followed by a `/`. If the subfolder you specified does not exist, it will be created for you. You can toggle the visibility of the subfolders by tapping on the bottom 90% of the right edge of the screen or pressing Ctrl + D.
 
+
+**Note**: due to how QML's [FolderListModel](https://doc.qt.io/qt-6/qml-qt-labs-folderlistmodel-folderlistmodel.html) is implemented, subfolders are not filtered. For instance, if your `/home/root/reMarkdown/` folder has two markdown files--`markdown.md` and `textfile.md`--as well as a subfolder `subfolder`, when you open reMarkdown, you will see all three listed in the selector. Once you type `m`, `textfile.md` will no longer be visible since it is an `.md` file that does not start with an `m`, but `subfolder` will still be visible since subfolders are not filtered.
+
 ### Hidden files
 
 By default, the selector will not show hidden files and folders. You can toggle this by pressing Ctrl + H or tapping on the top 10% of the right edge of the screen.
-
-**Note**: due to how QML's [FolderListModel](https://doc.qt.io/qt-6/qml-qt-labs-folderlistmodel-folderlistmodel.html) is implemented, subfolders are not filtered. For instance, if your `/home/root/reMarkdown/` folder has two markdown files--`markdown.md` and `textfile.md`--as well as a subfolder `subfolder`, when you open reMarkdown, you will see all three listed in the selector. Once you type `m`, `textfile.md` will no longer be visible since it is an `.md` file that does not start with an `m`, but `subfolder` will still be visible since subfolders are not filtered.
 
 ### External keyboard
 

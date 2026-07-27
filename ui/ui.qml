@@ -292,8 +292,9 @@ Rectangle {
         rootFolder: "file://" + root.folder
         nameFilters: ["*.md"]
         caseSensitive: false
-        sortField: FolderListModel.Type
+        sortField: FolderListModel.Name
         showDirs: true
+        showDirsFirst: true
         showDotAndDotDot: true
     }
 
@@ -583,7 +584,7 @@ Rectangle {
             Keys.onPressed: (event) => {
                 if (event.modifiers & Qt.ControlModifier) {
                     if (event.key == Qt.Key_Up) {
-                        let prevLineBreak = editor.text.lastIndexOf("\n\n", Math.max(0, editor.cursorPosition - 2));
+                        let prevLineBreak = editor.text.lastIndexOf("\n\n", Math.max(0, editor.cursorPosition - 3));
                         if (prevLineBreak < 0) {
                             editor.cursorPosition = 0;
                         }
