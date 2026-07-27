@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
+	"mime/multipart"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -26,6 +29,7 @@ type MessageType uint32
 const (
 	MarkDownRequest MessageType = 100
 	FolderRequest   MessageType = 300
+	XochitlRequest  MessageType = 500
 )
 
 type reMarkdownState struct {
@@ -121,6 +125,87 @@ func (state *reMarkdownState) HandleMessage(replier *appload.BackendReplier, mes
 				replier.SendMessage(305, "Couldn't create folder")
 			}
 			replier.SendMessage(302, "Created new folder")
+		}
+	} else if message.MsgType == uint32(XochitlRequest) {
+		fmt.Println("xochitl request received")
+		var aviaryUrl string
+		if info, err := os.Stat("/home/root/reMarkdown/AVIARY"); errors.Is(err, os.ErrNotExist) {
+			fmt.Println("no aviary file found")
+			replier.SendMessage(505, "Error")
+			return
+		} else if info.IsDir() {
+			fmt.Println("AVIARY is a directory")
+			replier.SendMessage(505, "Error")
+			return
+		} else {
+			content, err := os.ReadFile("/home/root/reMarkdown/AVIARY")
+			if err != nil {
+				fmt.Println("AVIARY can't be read")
+				replier.SendMessage(505, "Error")
+				return
+			} else {
+				aviaryUrl = string(content)
+				aviaryUrl = strings.TrimRight(aviaryUrl, "\r\n")
+				if !strings.HasPrefix(aviaryUrl, "http") {
+					fmt.Println("AVIARY is not a proper aviary url")
+					replier.SendMessage(505, "Error")
+					return
+				}
+				if !strings.HasSuffix(aviaryUrl, "/") {
+					aviaryUrl = aviaryUrl + "/"
+				}
+			}
+		}
+		filePath := strings.TrimPrefix(message.Contents, "file://")
+		fmt.Println("File being opened: ", filePath)
+		file, err := os.Open(filePath)
+		if err != nil {
+			fmt.Printf("Error opening file: %v\n", err)
+			replier.SendMessage(505, "Error")
+		} else {
+			defer file.Close()
+			var body bytes.Buffer
+			writer := multipart.NewWriter(&body)
+			part, err := writer.CreateFormFile("file", filepath.Base(filePath))
+			if err != nil {
+				fmt.Printf("Error copying file: %v\n", err)
+				replier.SendMessage(505, "Error")
+				return
+			}
+			_, err = io.Copy(part, file)
+			if err != nil {
+				fmt.Printf("Error copying file: %v\n", err)
+				replier.SendMessage(505, "Error")
+				return
+			} else {
+				err = writer.Close()
+				if err != nil {
+					fmt.Printf("Error closing writer: %v\n", err)
+					replier.SendMessage(505, "Error")
+					return
+				} else {
+					url := aviaryUrl + "api/upload"
+					req, err := http.NewRequest(http.MethodPost, url, &body)
+					if err != nil {
+						fmt.Printf("Error creating request: %v\n", err)
+						replier.SendMessage(505, "Error")
+						return
+					} else {
+						req.Header.Set("Content-Type", writer.FormDataContentType())
+						client := &http.Client{}
+						resp, err := client.Do(req)
+						if err != nil {
+							fmt.Printf("Error sending request: %v\n", err)
+							replier.SendMessage(505, "Error")
+							return
+						} else {
+							defer resp.Body.Close()
+							replier.SendMessage(501, "Transfer to Xochitl initiated")
+
+						}
+					}
+				}
+			}
 		}
 	}
 }

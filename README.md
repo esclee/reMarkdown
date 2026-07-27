@@ -62,6 +62,12 @@ If the target file does not exist, it will be created.
 
 In the render view, tapping the top 10% of the right edge or hitting the "W" key on your keyboard will display the approximate word count of the current document; tapping the top 10% of the right edge or hitting the "W" key on your keyboard again will remove the word count. Word count only includes text elements.
 
+### Send to reMarkable
+
+If you use Aviary and the instance is reachable from your tablet, reMarkdown supports sending markdown files to xochitl via Aviary (converted to `.epub`) so you can read and annotate it on the tablet as you would with any other `.epub` file.
+- Create a plaintext file `/home/root/reMarkdown/AVIARY` with the content being the URL (incl. http(s)://) of your Aviary instance. Note that this is not an `.md` file and thus cannot be created using reMarkdown.
+- While the markdown file you want to send to reMarkable is open on reMarkdown, press `ctrl + P` to send the current file to xochitl. If using the virtual keyboard, tap the top 10% of the left edge while in the render view.
+
 ## Why not stick with the stock reMarkable notebooks?
 
 It is true that you can type into reMarkable notebook, and it supports some amount of Markdown syntax when typing. But the problem is that it's not _saved_ in the Markdown format; rather, everything is saved in the proprietary .rm files, making it hard to easily grab the typed content. The goal of reMarkdown is to have a true Markdown editor for the reMarkable tablet--distraction-free writing but producing files that any other Markdown editor/renderer can work with.

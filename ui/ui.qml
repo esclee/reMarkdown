@@ -177,6 +177,7 @@ Rectangle {
     function toggleView() {
         if (editState) {
             console.log("Toggling to rendered view");
+            saveFile();
             cursorPosition = editor.cursorPosition;
             curY = flick.contentY;
             root.doc = editor.text;
@@ -325,9 +326,15 @@ Rectangle {
             anchors.right: parent.right
             height: parent.height * 0.1
             onClicked: {
-                root.extKeyboard = !root.extKeyboard;
-                if (root.extKeyboard) {
-                    Qt.inputMethod.hide();
+                if (!editState && !selector) {
+                    console.log("Message 500 being sent");
+                    console.log(root.file);
+                    appload.sendMessage(500, root.file);
+                } else {
+                    root.extKeyboard = !root.extKeyboard;
+                    if (root.extKeyboard) {
+                        Qt.inputMethod.hide();
+                    }
                 }
             }
         }
@@ -606,6 +613,10 @@ Rectangle {
                     if (event.key == Qt.Key_S) {
                         saveFile();
                     }
+                    if (event.key == Qt.Key_P) {
+                        saveFile();
+                        appload.sendMessage(500, root.file);
+                    }
                 }
             }
 
@@ -720,6 +731,14 @@ Rectangle {
                     }
                 }
                 console.log(link + " is not a .md file in " + root.folder + ", ignoring.");
+            }
+
+            Keys.onPressed: (event) => {
+                if (event.modifiers & Qt.ControlModifier) {
+                    if (event.key == Qt.Key_P) {
+                        appload.sendMessage(500, root.file);
+                    }
+                }
             }
 
             Keys.onReleased: (event) => {
